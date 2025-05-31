@@ -23,7 +23,7 @@ export default function AnswerSection({ answers }: AnswerSectionProps) {
   }
   const answer = answers[0];
   const formattedDate = new Date(answer.created_at).toLocaleDateString('ja-JP');
-  // const responderIcon = answer.responder === '俺' ? '/icon-ore.png' : '/icon-tama.png';
+  const responderIcon = answer.responder === 'ヘイポー' ? '/icon-heipo.png' : '/icon-tama.png'; // Placeholder paths
 
   return (
     <div className="bg-green-50 shadow-md rounded-lg p-4 md:p-6 mb-6 border border-green-200">
@@ -31,7 +31,7 @@ export default function AnswerSection({ answers }: AnswerSectionProps) {
         {/* <Image src={responderIcon} alt={answer.responder} width={40} height={40} className="rounded-full mr-3" /> */}
         <h2 className="text-xl md:text-2xl font-semibold">回答 ({answer.responder}より)</h2>
       </div>
-      <p className="text-gray-600 text-sm mb-4">回答日時: {formattedDate}</p>
+      <p className="text-gray-600 text-sm mb-4">回答日: {formattedDate}</p>
       <div className="prose prose-sm sm:prose-base max-w-none mb-4">
         <p className="whitespace-pre-wrap break-words">{answer.content}</p>
       </div>

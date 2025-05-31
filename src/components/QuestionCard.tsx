@@ -22,7 +22,7 @@ export default function QuestionCard({ id, title, category, created_at, status }
               {category}
             </span>
           )}
-          <span className="whitespace-nowrap">投稿日時: {formattedDate}</span>
+          <span className="whitespace-nowrap">投稿日: {formattedDate}</span>
         </div>
         <span
             className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap mt-1 sm:mt-0 ${

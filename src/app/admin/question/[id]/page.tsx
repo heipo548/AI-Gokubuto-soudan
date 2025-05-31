@@ -34,7 +34,7 @@ export default function AnswerEditorPage() {
   const [answerContent, setAnswerContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
-  const [responder, setResponder] = useState<'俺' | 'たま'>('俺');
+  const [responder, setResponder] = useState<'ヘイポー' | 'たま'>('ヘイポー');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [existingAnswerId, setExistingAnswerId] = useState<number | null>(null);
 
@@ -73,7 +73,7 @@ export default function AnswerEditorPage() {
             setAnswerContent(existing.content);
             setImageUrl(existing.image_url || '');
             setLinkUrl(existing.link_url || '');
-            setResponder(existing.responder as '俺' | 'たま');
+                setResponder(existing.responder as 'ヘイポー' | 'たま');
             setExistingAnswerId(existing.id || null);
           }
         } catch (err: any) {
@@ -211,8 +211,8 @@ export default function AnswerEditorPage() {
 
         <div className="mb-6">
           <label htmlFor="responder" className="block text-gray-700 font-bold mb-2">回答者</label>
-          <select id="responder" value={responder} onChange={(e) => setResponder(e.target.value as '俺' | 'たま')} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            <option value="俺">俺</option>
+          <select id="responder" value={responder} onChange={(e) => setResponder(e.target.value as 'ヘイポー' | 'たま')} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <option value="ヘイポー">ヘイポー</option>
             <option value="たま">たま</option>
           </select>
         </div>

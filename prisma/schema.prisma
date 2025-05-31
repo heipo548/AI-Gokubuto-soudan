@@ -17,6 +17,7 @@ model Question {
   category           String?   @db.VarChar(50) // 'AI', '都市伝説', 'その他'
   status             String    @default("pending") @db.VarChar(20) // 'pending', 'answered'
   notification_token String?   @unique @db.VarChar(255) // Added @unique for faster lookups if tokens are unique
+      submitter_nickname String?   @db.VarChar(100) // New field for optional submitter nickname
   created_at         DateTime  @default(now())
   updated_at         DateTime  @updatedAt
   answers            Answer[]

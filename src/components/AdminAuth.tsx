@@ -51,7 +51,6 @@ export default function AdminAuth({ onAuthenticated }: AdminAuthProps) {
           ログイン
         </button>
       </form>
-       <p className="text-xs text-gray-500 mt-4">開発用: 環境変数 `NEXT_PUBLIC_ADMIN_PASSWORD` でパスワードを設定できます。デフォルトは "8888" です。</p>
     </div>
   );
 }

@@ -9,6 +9,7 @@ export default function SubmitPage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState(''); // Default or allow selection
+  const [submitterNickname, setSubmitterNickname] = useState('');
   const [notificationToken, setNotificationToken] = useState(''); // For anonymous notifications
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +44,7 @@ export default function SubmitPage() {
           content,
           category: category || null, // Send null if category is empty
           notification_token: currentToken,
+          submitter_nickname: submitterNickname.trim() || undefined, // Send undefined if empty, API will default
         }),
       });
 
@@ -59,10 +61,11 @@ export default function SubmitPage() {
         localStorage.setItem(`question_${newQuestion.id}`, currentToken);
       }
 
-      setSuccessMessage(`質問が投稿されました！ 通知用トークン: ${currentToken} (このトークンを控えてください)`);
+      setSuccessMessage('質問が投稿されました！');
       setTitle('');
       setContent('');
       setCategory('');
+      setSubmitterNickname('');
       // Optional: Redirect after a delay or provide a link to the question
       // router.push(`/question/${newQuestion.id}`);
     } catch (err: any) {
@@ -124,6 +127,20 @@ export default function SubmitPage() {
             <option value="都市伝説">都市伝説</option>
             <option value="その他">その他</option>
           </select>
+        </div>
+
+        <div className="mb-6">
+          <label htmlFor="submitterNickname" className="block text-gray-700 font-bold mb-2">
+            ニックネーム (任意, 100文字以内)
+          </label>
+          <input
+            type="text"
+            id="submitterNickname"
+            value={submitterNickname}
+            onChange={(e) => setSubmitterNickname(e.target.value)}
+            maxLength={100}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          />
         </div>
 
         {/* Hidden field for notification_token or display if already generated */}
