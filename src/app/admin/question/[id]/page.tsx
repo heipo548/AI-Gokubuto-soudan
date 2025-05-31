@@ -56,7 +56,7 @@ export default function AnswerEditorPage() {
 
   useEffect(() => {
     if (id && isAuthenticated) {
-      async function fetchQuestionAndAnswer() {
+      const fetchQuestionAndAnswer = async () => {
         setIsLoadingQuestion(true);
         setError(null);
         try {
@@ -80,7 +80,7 @@ export default function AnswerEditorPage() {
         } finally {
           setIsLoadingQuestion(false);
         }
-      }
+      };
       fetchQuestionAndAnswer();
     }
   }, [id, isAuthenticated]);

@@ -1,10 +1,10 @@
 // src/app/api/questions/[id]/comments/route.ts
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server'; // Import NextRequest
 import prisma from '@/lib/prisma';
 import { getClientIp } from 'request-ip';
 
 export async function POST(
-  request: Request,
+  request: NextRequest, // Type request as NextRequest
   { params }: { params: { id: string } }
 ) {
   try {
@@ -32,20 +32,28 @@ export async function POST(
       return NextResponse.json({ error: 'Question not found' }, { status: 404 });
     }
 
-    const ipAddress = getClientIp(request);
+    let ipAddress: string | null = null;
+    try {
+      ipAddress = getClientIp(request as any);
+    } catch (ipError) {
+      console.error("Failed to get IP address:", ipError);
+      ipAddress = "unknown_ip_retrieval_failed";
+    }
 
     const newComment = await prisma.comment.create({
       data: {
         question_id: questionId,
         content,
         commenter_name: commenter_name || '匿名', // Default to 匿名 if not provided
-        ip_address: ipAddress || 'unknown',
+        ip_address: ipAddress || 'unknown_ip_fallback', // Ensure a fallback if still null
       },
     });
     return NextResponse.json(newComment, { status: 201 });
 
   } catch (error) {
     console.error(`Error adding comment to question ${params.id}:`, error);
-    return NextResponse.json({ error: 'Failed to add comment' }, { status: 500 });
+    // Ensure a proper error structure is returned
+    const errorMessage = error instanceof Error ? error.message : 'Failed to add comment';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

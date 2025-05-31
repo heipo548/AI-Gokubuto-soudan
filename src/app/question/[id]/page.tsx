@@ -27,7 +27,7 @@ export default function QuestionPage() {
 
   useEffect(() => {
     if (id) {
-      async function fetchQuestionData() {
+      const fetchQuestionData = async () => {
         try {
           setLoading(true);
           const response = await fetch(`/api/questions/${id}`);
@@ -44,7 +44,7 @@ export default function QuestionPage() {
         } finally {
           setLoading(false);
         }
-      }
+      };
       fetchQuestionData();
     } else {
       // Handle case where id is not available, though Next.js routing should ensure it

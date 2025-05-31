@@ -7,10 +7,10 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   // Ensure the prisma instance is re-used during hot-reloading
   // See https://www.prisma.io/docs/guides/database/troubleshooting-orm/help-articles/nextjs-prisma-client-dev-practices
-  if (!global.prisma) {
-    global.prisma = new PrismaClient();
+  if (!(global as any).prisma) {
+    (global as any).prisma = new PrismaClient();
   }
-  prisma = global.prisma;
+  prisma = (global as any).prisma;
 }
 
 export default prisma;
