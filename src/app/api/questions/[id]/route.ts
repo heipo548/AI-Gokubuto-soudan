@@ -14,16 +14,47 @@ export async function GET(
 
     const question = await prisma.question.findUnique({
       where: { id },
-      include: {
-            answers: true, // Existing
-            comments: { // Include comments
-              orderBy: {
-                created_at: 'asc', // Show oldest comments first
-              },
-            },
-            _count: { // Include count of likes
-              select: { likes: true },
-            },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        category: true,
+        status: true,
+        submitter_nickname: true,
+        created_at: true,
+        updated_at: true,
+        notification_token: true, // Assuming this is a field you want to return
+        nannoJikanDayoCount: true, // Explicitly select nannoJikanDayoCount
+        answers: {
+          // Define what fields of answers you need, or true for all
+          // For example:
+          select: {
+            id: true,
+            content: true,
+            responder: true,
+            created_at: true,
+            image_url: true,
+            link_url: true,
+            // question_id: true, // usually not needed if you have the question context
+          }
+        },
+        comments: {
+          orderBy: {
+            created_at: 'asc',
+          },
+          // Define what fields of comments you need, or true for all
+          // For example:
+          select: {
+            id: true,
+            content: true,
+            commenter_name: true,
+            created_at: true,
+            // question_id: true, // usually not needed
+          }
+        },
+        _count: {
+          select: { likes: true },
+        },
       },
     });
 
