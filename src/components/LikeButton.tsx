@@ -62,11 +62,10 @@ export default function LikeButton({ questionId, initialLikes }: LikeButtonProps
     <div className="flex items-center space-x-2">
       <button
         onClick={handleLike}
-        disabled={isLiked || isLoading}
         className={`font-bold py-2 px-4 rounded transition-colors duration-150
-                    ${isLiked ? 'bg-red-300 text-red-700 cursor-not-allowed'
+                    ${isLiked ? 'bg-red-300 text-red-700'
                              : 'bg-red-500 hover:bg-red-700 text-white'}
-                    ${isLoading ? 'opacity-50 cursor-wait' : ''}`}
+                    ${isLoading ? 'opacity-50' : ''}`}
       >
         いいね！ ({likes})
       </button>
