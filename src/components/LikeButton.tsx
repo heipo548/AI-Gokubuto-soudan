@@ -13,22 +13,7 @@ export default function LikeButton({ questionId, initialLikes }: LikeButtonProps
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Check localStorage if user has liked this question before (simple anonymous tracking)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const likedStatus = localStorage.getItem(`question_${questionId}_liked`);
-      if (likedStatus === 'true') {
-        setIsLiked(true);
-      }
-    }
-  }, [questionId]);
-
   const handleLike = async () => {
-    if (isLiked) {
-      // Optional: Implement unliking, or just prevent multiple likes from same client session
-      setError("You've already liked this.");
-      return;
-    }
     setIsLoading(true);
     setError(null);
     try {
