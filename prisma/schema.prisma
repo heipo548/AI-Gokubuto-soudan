@@ -32,7 +32,7 @@ model Question {
 
 model Answer {
   id          Int      @id @default(autoincrement())
-  question    Question @relation(fields: [question_id], references: [id])
+  question    Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
   question_id Int
   content     String
   image_url   String?  @db.VarChar(500)
@@ -47,7 +47,7 @@ model Answer {
 
 model Like {
   id          Int      @id @default(autoincrement())
-  question    Question @relation(fields: [question_id], references: [id])
+  question    Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
   question_id Int
   ip_address  String?  @db.Inet // Prisma doesn't have Inet, use String and handle validation at app level or use native type if possible later
   created_at  DateTime @default(now())
@@ -57,7 +57,7 @@ model Like {
 
 model Comment {
   id             Int      @id @default(autoincrement())
-  question       Question @relation(fields: [question_id], references: [id])
+  question       Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
   question_id    Int
   content        String
   commenter_name String   @default("匿名") @db.VarChar(50)

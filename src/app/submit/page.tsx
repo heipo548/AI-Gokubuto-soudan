@@ -29,10 +29,8 @@ export default function SubmitPage() {
       return;
     }
     setIsSubmitting(true);
-    const currentToken = notificationToken || generateToken();
-    if (!notificationToken) {
-        setNotificationToken(currentToken); // Set it if it was just generated
-    }
+    const currentToken = generateToken(); // Always generate a new token for each submission
+    setNotificationToken(currentToken); // Update state for this submission instance (optional, as it's used immediately)
 
     try {
       const response = await fetch('/api/questions', {
@@ -65,6 +63,7 @@ export default function SubmitPage() {
       setContent('');
       setCategory('');
       setSubmitterNickname('');
+      setNotificationToken(''); // Reset for the next submission
       // Optional: Redirect after a delay or provide a link to the question
       // router.push(`/question/${newQuestion.id}`);
     } catch (err: any) {
