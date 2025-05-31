@@ -24,7 +24,7 @@ export async function GET(
             _count: { // Include count of likes
               select: {
                 likes: true,
-                nannoJikanDayoClicks: true,
+                // nannoJikanDayoClicks: true, ← この行を削除またはコメントアウト
               },
             },
       },

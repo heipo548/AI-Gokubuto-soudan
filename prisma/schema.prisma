@@ -11,18 +11,19 @@ datasource db {
 }
 
 model Question {
-  id                 Int       @id @default(autoincrement())
-  title              String    @db.VarChar(200)
-  content            String
-      category           String    @db.VarChar(50) // Now required
-  status             String    @default("pending") @db.VarChar(20) // 'pending', 'answered'
-  notification_token String?   @unique @db.VarChar(255) // Added @unique for faster lookups if tokens are unique
-      submitter_nickname String?   @db.VarChar(100) // New field for optional submitter nickname
-  created_at         DateTime  @default(now())
-  updated_at         DateTime  @updatedAt
-  answers            Answer[]
-  likes              Like[]
-  comments           Comment[]
+  id                    Int       @id @default(autoincrement())
+  title                 String    @db.VarChar(200)
+  content               String
+  category              String    @db.VarChar(50) // Now required
+  status                String    @default("pending") @db.VarChar(20) // 'pending', 'answered'
+  notification_token    String?   @unique @db.VarChar(255) // Added @unique for faster lookups if tokens are unique
+  submitter_nickname    String?   @db.VarChar(100) // New field for optional submitter nickname
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+  answers               Answer[]
+  likes                 Like[]
+  comments              Comment[]
+  nannoJikanDayoClicks  NannoJikanDayoClick[] // 追加: なんの時間だよクリックのリレーション
 
   @@index([status])
   @@index([category])
@@ -65,5 +66,18 @@ model Comment {
   created_at     DateTime @default(now())
 
   @@index([question_id]) // Explicitly define
+  @@index([created_at])
+}
+
+// 追加: なんの時間だよクリック用のモデル
+model NannoJikanDayoClick {
+  id          Int      @id @default(autoincrement())
+  question    Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  question_id Int
+  ip_address  String?  @db.Inet
+  created_at  DateTime @default(now())
+
+  @@unique([question_id, ip_address]) // 同じIPから同じ質問への重複クリックを防ぐ
+  @@index([question_id])
   @@index([created_at])
 }
