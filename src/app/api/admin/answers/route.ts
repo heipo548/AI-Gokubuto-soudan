@@ -58,8 +58,12 @@ export async function POST(request: Request) {
           { folder: 'ai_qna_answers' }, // Optional: folder in Cloudinary
           (error, result) => {
             if (error) {
+              console.error('Cloudinary upload_stream error object:', JSON.stringify(error, null, 2));
               reject(error);
             } else {
+              if (!result || !result.secure_url) {
+                console.warn('Cloudinary upload_stream result missing secure_url. Full result:', JSON.stringify(result, null, 2));
+              }
               resolve(result || {});
             }
           }
@@ -69,8 +73,10 @@ export async function POST(request: Request) {
       });
 
       if (uploadResult.error || !uploadResult.secure_url) {
-        console.error('Cloudinary upload error:', uploadResult.error);
-        return NextResponse.json({ error: 'Image upload failed.' }, { status: 500 });
+        // Detailed error already logged by the promise's reject or the warning above.
+        // Log a more generic message here or re-log the specific part if needed.
+        console.error('Failed Cloudinary upload. Error object (if any):', JSON.stringify(uploadResult.error, null, 2), 'Full result (if no error but no URL):', JSON.stringify(uploadResult, null, 2));
+        return NextResponse.json({ error: 'Image upload failed. Please check server logs for details.' }, { status: 500 });
       }
       uploadedImageUrl = uploadResult.secure_url;
     }
