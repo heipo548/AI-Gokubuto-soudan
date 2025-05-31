@@ -5,6 +5,7 @@ import { useEffect, useState, FormEvent, ChangeEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import Spinner from '@/components/Spinner'; // Import Spinner
 
 interface QuestionData {
   id: number;
@@ -166,7 +167,7 @@ export default function AnswerEditorPage() {
     return <p className="text-center mt-10">管理者認証を確認中...</p>;
   }
 
-  if (isLoadingQuestion) return <div className="container mx-auto p-4"><p>質問情報を読み込み中...</p></div>;
+  if (isLoadingQuestion) return <div className="container mx-auto p-4 flex justify-center"><Spinner /></div>;
   if (error && !questionData) return <div className="container mx-auto p-4"><p className="text-red-500">Error: {error}</p></div>;
   if (!questionData) return <div className="container mx-auto p-4"><p>質問が見つかりません。</p></div>;
 
@@ -217,7 +218,7 @@ export default function AnswerEditorPage() {
         </div>
 
         <div className="flex items-center justify-between">
-          <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50" disabled={isSubmitting || isLoadingQuestion}>
+          <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 transition-colors duration-150 ease-in-out" disabled={isSubmitting || isLoadingQuestion}>
             {isSubmitting ? '処理中...' : (existingAnswerId ? '回答を更新' : '回答を投稿')}
           </button>
         </div>

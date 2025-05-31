@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import QuestionCard, { QuestionCardProps } from './QuestionCard';
+import Spinner from './Spinner'; // Import Spinner
 
 interface QuestionListProps {
   selectedCategory: string | null; // 'all', 'AI', '都市伝説', 'その他', or null for all
@@ -38,7 +39,7 @@ export default function QuestionList({ selectedCategory }: QuestionListProps) {
     fetchQuestions();
   }, [selectedCategory]); // Re-fetch when selectedCategory changes
 
-  if (loading) return <p className="text-center py-4">Loading questions...</p>;
+  if (loading) return <Spinner />;
   if (error) return <p className="text-red-500 text-center py-4">Error: {error}</p>;
   if (questions.length === 0) return <p className="text-center py-4">該当する質問はありません。</p>;
 

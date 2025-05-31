@@ -41,7 +41,7 @@ export default function AdminPage() {
         <h1 className="text-3xl font-bold">管理者ダッシュボード</h1>
         <button
           onClick={handleLogout}
-          className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors duration-150 ease-in-out"
         >
           ログアウト
         </button>
