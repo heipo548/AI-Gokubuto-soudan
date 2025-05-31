@@ -12,6 +12,13 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto p-4">
+      {/* Added text below */}
+      <div className="text-center my-8">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
+          みなさんの、AIや都市伝説の質問にヘイポーとたまが終止符を打ちます。
+        </h2>
+      </div>
+      {/* Existing content follows */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
         <h1 className="text-3xl font-bold text-center sm:text-left">質問一覧</h1>
         <QuestionSubmitButton />

@@ -22,7 +22,10 @@ export async function GET(
               },
             },
             _count: { // Include count of likes
-              select: { likes: true },
+              select: {
+                likes: true,
+                nannoJikanDayoClicks: true,
+              },
             },
       },
     });
