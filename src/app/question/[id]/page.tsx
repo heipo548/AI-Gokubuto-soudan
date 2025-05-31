@@ -13,7 +13,13 @@ interface FullQuestionData extends QuestionProps {
   id: number;
   answers?: AnswerData[];
   comments: Comment[];
-  _count: { likes: number };
+  _count: {
+    likes: number;
+    // Assuming nannoJikanDayoCount is NOT part of _count from a relation,
+    // but a direct field on the Question model.
+    // If it were a relation count, it would be in _count.
+  };
+  nannoJikanDayoCount: number; // Add this line
   status: string; // Add status to FullQuestionData
   updated_at: string; // Add updated_at to track changes in answers
   submitter_nickname?: string | null; // Add submitter_nickname
@@ -149,6 +155,7 @@ export default function QuestionPage() {
       <InteractionSection
         questionId={questionData.id}
         initialLikes={questionData._count?.likes || 0}
+        initialNannoJikanDayoCount={questionData.nannoJikanDayoCount || 0} // Add this prop
         initialComments={questionData.comments || []}
       />
     </div>
