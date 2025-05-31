@@ -1,13 +1,25 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma'; // Adjust path if needed
+import prisma from '@/lib/prisma';
 
 // GET /api/questions - Fetch all questions
-export async function GET() {
+export async function GET(request: Request) { // Add request parameter
   try {
+    const { searchParams } = new URL(request.url); // Get searchParams from request.url
+    const category = searchParams.get('category');
+
+    const whereClause: any = {};
+    if (category && category.trim() !== '' && category.toLowerCase() !== 'all') {
+      whereClause.category = category;
+    }
+
     const questions = await prisma.question.findMany({
+      where: whereClause,
       orderBy: {
         created_at: 'desc',
       },
+      // Optionally include like counts here if needed for the main list,
+      // or keep it simpler and let the detail page fetch counts.
+      // For MVP, keeping it simple.
     });
     return NextResponse.json(questions);
   } catch (error) {

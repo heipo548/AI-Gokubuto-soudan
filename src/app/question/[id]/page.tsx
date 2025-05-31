@@ -8,10 +8,13 @@ import AnswerSection, { AnswerProps as AnswerData } from '@/components/AnswerSec
 import InteractionSection from '@/components/InteractionSection';
 
 // Define a type for the combined question data including answers
+import { Comment } from '@prisma/client'; // Assuming Comment type from Prisma
+
 interface FullQuestionData extends QuestionProps {
   id: number; // Ensure id is part of the main data
   answers?: AnswerData[]; // Answers are optional
-  // likes and comments will be added later
+  comments: Comment[]; // From Prisma include
+  _count: { likes: number }; // From Prisma include
 }
 
 export default function QuestionPage() {
@@ -63,7 +66,11 @@ export default function QuestionPage() {
         created_at={questionData.created_at}
       />
       <AnswerSection answers={questionData.answers} />
-      <InteractionSection questionId={questionData.id} />
+      <InteractionSection
+        questionId={questionData.id}
+        initialLikes={questionData._count?.likes || 0}
+        initialComments={questionData.comments || []}
+      />
     </div>
   );
 }

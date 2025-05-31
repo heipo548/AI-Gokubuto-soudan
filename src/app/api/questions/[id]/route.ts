@@ -15,9 +15,15 @@ export async function GET(
     const question = await prisma.question.findUnique({
       where: { id },
       include: {
-        answers: true, // Include related answers
-        // likes: true,    // Decide if likes and comments are needed here or fetched separately
-        // comments: true,
+            answers: true, // Existing
+            comments: { // Include comments
+              orderBy: {
+                created_at: 'asc', // Show oldest comments first
+              },
+            },
+            _count: { // Include count of likes
+              select: { likes: true },
+            },
       },
     });
 

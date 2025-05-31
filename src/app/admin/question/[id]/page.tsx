@@ -1,11 +1,11 @@
 // src/app/admin/question/[id]/page.tsx
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
-import { useParams, useRouter } from 'next/navigation'; // To get [id] from URL and for navigation
+import { useEffect, useState, FormEvent, ChangeEvent } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
-// Re-using QuestionProps from QuestionDetail or define a simpler one for admin
 interface QuestionData {
   id: number;
   title: string;
@@ -13,15 +13,15 @@ interface QuestionData {
   category?: string | null;
   status: string;
   created_at: string;
-  answers: AnswerData[]; // Expecting existing answers if any
+  answers: AnswerDataFromServer[];
 }
 
-interface AnswerData {
-  id?: number; // id is present if answer already exists
+interface AnswerDataFromServer {
+  id?: number;
   content: string;
   image_url?: string | null;
   link_url?: string | null;
-  responder: string; // '俺' or 'たま'
+  responder: string;
 }
 
 export default function AnswerEditorPage() {
@@ -33,7 +33,8 @@ export default function AnswerEditorPage() {
   const [answerContent, setAnswerContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
-  const [responder, setResponder] = useState<'俺' | 'たま'>('俺'); // Default responder
+  const [responder, setResponder] = useState<'俺' | 'たま'>('俺');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [existingAnswerId, setExistingAnswerId] = useState<number | null>(null);
 
   const [isLoadingQuestion, setIsLoadingQuestion] = useState(true);
@@ -41,7 +42,6 @@ export default function AnswerEditorPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Basic admin auth check (same as admin page, ideally a shared hook/context)
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -49,12 +49,10 @@ export default function AnswerEditorPage() {
       if (storedAuth === 'true') {
         setIsAuthenticated(true);
       } else {
-        // Redirect to admin login if not authenticated
         router.push('/admin');
       }
     }
   }, [router]);
-
 
   useEffect(() => {
     if (id && isAuthenticated) {
@@ -62,21 +60,20 @@ export default function AnswerEditorPage() {
         setIsLoadingQuestion(true);
         setError(null);
         try {
-          const response = await fetch(`/api/questions/${id}`); // Using public API to get question and existing answers
+          const response = await fetch(`/api/questions/${id}`);
           if (!response.ok) {
             throw new Error(`Failed to fetch question: ${response.statusText}`);
           }
           const data: QuestionData = await response.json();
           setQuestionData(data);
 
-          // Check for existing answer (assuming one answer per question as per current design)
           if (data.answers && data.answers.length > 0) {
             const existing = data.answers[0];
             setAnswerContent(existing.content);
             setImageUrl(existing.image_url || '');
             setLinkUrl(existing.link_url || '');
             setResponder(existing.responder as '俺' | 'たま');
-            setExistingAnswerId(existing.id || null); // If answer has an ID
+            setExistingAnswerId(existing.id || null);
           }
         } catch (err: any) {
           setError(err.message);
@@ -87,6 +84,27 @@ export default function AnswerEditorPage() {
       fetchQuestionAndAnswer();
     }
   }, [id, isAuthenticated]);
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setSelectedFile(event.target.files[0]);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          setImageUrl(e.target.result as string);
+        }
+      };
+      reader.readAsDataURL(event.target.files[0]);
+    } else {
+      setSelectedFile(null);
+      setImageUrl(questionData?.answers?.[0]?.image_url || '');
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedFile(null);
+    setImageUrl('');
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -100,38 +118,43 @@ export default function AnswerEditorPage() {
       return;
     }
 
+    const formData = new FormData();
+    formData.append('question_id', id);
+    formData.append('content', answerContent);
+    formData.append('responder', responder);
+    if (linkUrl) formData.append('link_url', linkUrl);
+    if (selectedFile) {
+      formData.append('image', selectedFile);
+    } else if (!imageUrl && existingAnswerId && questionData?.answers[0]?.image_url) {
+       formData.append('existing_image_url', '');
+    } else if (imageUrl && questionData?.answers[0]?.image_url === imageUrl) {
+        formData.append('existing_image_url', imageUrl);
+    }
+
     try {
-      // For MVP, we'll always POST to /api/admin/answers.
-      // A more robust solution would use PUT if existingAnswerId is present.
-      // However, the current /api/admin/answers doesn't support PUT for editing.
-      // We are also assuming that posting a new answer implicitly overwrites/is the only answer.
       const response = await fetch('/api/admin/answers', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question_id: Number(id),
-          content: answerContent,
-          image_url: imageUrl || null,
-          link_url: linkUrl || null,
-          responder,
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || '回答の投稿に失敗しました。');
+        throw new Error(errorData.error || errorData.details || '回答の投稿/更新に失敗しました。');
       }
 
-      // After successful answer submission, update the question status to 'answered'
-      await fetch(`/api/admin/questions/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'answered' }),
-      });
-
-      setSuccessMessage('回答が正常に投稿/更新されました。質問のステータスも「回答済み」に更新しました。');
-      // Optionally, redirect or update UI
-      // router.push('/admin');
+      const updatedAnswer = await response.json();
+      setSuccessMessage('回答が正常に投稿/更新されました。質問のステータスも「回答済み」に更新されています。');
+      if (updatedAnswer.image_url) {
+        setImageUrl(updatedAnswer.image_url);
+      } else if (!selectedFile && !imageUrl) {
+        setImageUrl('');
+      }
+      setSelectedFile(null);
+       if (id && isAuthenticated) {
+            const qResponse = await fetch(`/api/questions/${id}`);
+            const qData: QuestionData = await qResponse.json();
+            setQuestionData(qData);
+       }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -140,7 +163,6 @@ export default function AnswerEditorPage() {
   };
 
   if (!isAuthenticated) {
-    // This will be brief as the useEffect hook will redirect.
     return <p className="text-center mt-10">管理者認証を確認中...</p>;
   }
 
@@ -153,80 +175,50 @@ export default function AnswerEditorPage() {
       <Link href="/admin" className="text-indigo-600 hover:text-indigo-800 mb-4 inline-block">&larr; 管理者ダッシュボードに戻る</Link>
       <h1 className="text-3xl font-bold mb-2">回答エディター</h1>
 
-      <div className="bg-gray-100 p-4 rounded-lg mb-6">
+      <div className="bg-gray-100 p-3 sm:p-4 rounded-lg mb-6"> {/* Adjusted padding */}
         <h2 className="text-xl font-semibold mb-1">{questionData.title}</h2>
         <p className="text-sm text-gray-600">カテゴリ: {questionData.category || 'なし'} | ステータス: {questionData.status}</p>
         <p className="text-sm text-gray-700 mt-2 whitespace-pre-wrap">{questionData.content}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-8">
+      <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-4 sm:p-6 md:p-8"> {/* Adjusted padding */}
         {error && <p className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</p>}
         {successMessage && <p className="bg-green-100 text-green-700 p-3 rounded mb-4">{successMessage}</p>}
 
         <div className="mb-4">
-          <label htmlFor="answerContent" className="block text-gray-700 font-bold mb-2">
-            回答内容
-          </label>
-          <textarea
-            id="answerContent"
-            value={answerContent}
-            onChange={(e) => setAnswerContent(e.target.value)}
-            rows={10}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          />
+          <label htmlFor="answerContent" className="block text-gray-700 font-bold mb-2">回答内容</label>
+          <textarea id="answerContent" value={answerContent} onChange={(e) => setAnswerContent(e.target.value)} rows={10} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required />
         </div>
 
         <div className="mb-4">
-          <label htmlFor="imageUrl" className="block text-gray-700 font-bold mb-2">
-            画像URL (任意)
-          </label>
-          <input
-            type="url"
-            id="imageUrl"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            placeholder="https://example.com/image.png"
-          />
+          <label htmlFor="imageFile" className="block text-gray-700 font-bold mb-2">画像 (任意)</label>
+          <input type="file" id="imageFile" onChange={handleFileChange} accept="image/*" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+          {imageUrl && (
+            <div className="mt-4">
+              <p className="text-sm font-medium text-gray-700">現在の画像プレビュー:</p>
+              {/* Adjusted Image component for better responsive behavior if needed */}
+              <Image src={imageUrl} alt="回答画像プレビュー" width={150} height={150} className="mt-2 rounded border object-cover max-w-full" />
+              <button type="button" onClick={handleRemoveImage} className="mt-2 text-xs text-red-500 hover:text-red-700">画像を削除</button>
+            </div>
+          )}
         </div>
 
         <div className="mb-6">
-          <label htmlFor="linkUrl" className="block text-gray-700 font-bold mb-2">
-            参考リンクURL (任意)
-          </label>
-          <input
-            type="url"
-            id="linkUrl"
-            value={linkUrl}
-            onChange={(e) => setLinkUrl(e.target.value)}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            placeholder="https://example.com/related-info"
-          />
+          <label htmlFor="linkUrl" className="block text-gray-700 font-bold mb-2">参考リンクURL (任意)</label>
+          <input type="url" id="linkUrl" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="https://example.com/related-info"/>
         </div>
 
         <div className="mb-6">
-          <label htmlFor="responder" className="block text-gray-700 font-bold mb-2">
-            回答者
-          </label>
-          <select
-            id="responder"
-            value={responder}
-            onChange={(e) => setResponder(e.target.value as '俺' | 'たま')}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          >
+          <label htmlFor="responder" className="block text-gray-700 font-bold mb-2">回答者</label>
+          <select id="responder" value={responder} onChange={(e) => setResponder(e.target.value as '俺' | 'たま')} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             <option value="俺">俺</option>
             <option value="たま">たま</option>
           </select>
         </div>
 
         <div className="flex items-center justify-between">
-          <button
-            type="submit"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
-            disabled={isSubmitting || isLoadingQuestion}
-          >
-            {isSubmitting ? '投稿中...' : (existingAnswerId ? '回答を更新' : '回答を投稿')}
+          <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50" disabled={isSubmitting || isLoadingQuestion}>
+            {isSubmitting ? '処理中...' : (existingAnswerId ? '回答を更新' : '回答を投稿')}
           </button>
         </div>
       </form>
