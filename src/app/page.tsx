@@ -1,6 +1,7 @@
 // src/app/page.tsx
 'use client'; // Needs to be client component for useState
 import { useState } from 'react';
+import Link from 'next/link'; // Make sure Link is imported
 import QuestionList from '@/components/QuestionList';
 import QuestionSubmitButton from '@/components/QuestionSubmitButton';
 
@@ -32,6 +33,16 @@ export default function HomePage() {
       </div>
 
       <QuestionList selectedCategory={selectedCategory} />
-    </div>
+
+      {/* Add the new button here */}
+      <div className="mt-12 text-center">
+        <Link
+          href="/admin"
+          className="bg-gray-700 hover:bg-gray-900 text-white font-semibold py-2 px-4 rounded-lg shadow transition-colors duration-150 ease-in-out"
+        >
+          ヘポたま専用ボタン
+        </Link>
+      </div>
+    </div> // This is the closing tag of the main container div
   );
 }

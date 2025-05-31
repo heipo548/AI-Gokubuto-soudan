@@ -12,7 +12,7 @@ export default function AdminAuth({ onAuthenticated }: AdminAuthProps) {
 
   // In a real app, this would be an environment variable and checked on the backend.
   // For this MVP, we'll do a simple client-side check.
-  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'password'; // Fallback for local dev
+  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || '8888'; // Fallback for local dev
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -51,7 +51,7 @@ export default function AdminAuth({ onAuthenticated }: AdminAuthProps) {
           ログイン
         </button>
       </form>
-       <p className="text-xs text-gray-500 mt-4">開発用: 環境変数 `NEXT_PUBLIC_ADMIN_PASSWORD` でパスワードを設定できます。デフォルトは "password" です。</p>
+       <p className="text-xs text-gray-500 mt-4">開発用: 環境変数 `NEXT_PUBLIC_ADMIN_PASSWORD` でパスワードを設定できます。デフォルトは "8888" です。</p>
     </div>
   );
 }
