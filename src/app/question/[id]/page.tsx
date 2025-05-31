@@ -13,7 +13,10 @@ interface FullQuestionData extends QuestionProps {
   id: number;
   answers?: AnswerData[];
   comments: Comment[];
-  _count: { likes: number };
+  _count: {
+    likes: number;
+    nannoJikanDayoClicks?: number; // Ensure this is present
+  };
   status: string; // Add status to FullQuestionData
   updated_at: string; // Add updated_at to track changes in answers
   submitter_nickname?: string | null; // Add submitter_nickname
@@ -149,6 +152,7 @@ export default function QuestionPage() {
       <InteractionSection
         questionId={questionData.id}
         initialLikes={questionData._count?.likes || 0}
+        initialNannoJikanDayoClicks={questionData._count?.nannoJikanDayoClicks || 0} // Add this
         initialComments={questionData.comments || []}
       />
     </div>
