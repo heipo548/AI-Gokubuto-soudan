@@ -16,12 +16,17 @@ model Question {
   content            String
   category           String?   @db.VarChar(50) // 'AI', '都市伝説', 'その他'
   status             String    @default("pending") @db.VarChar(20) // 'pending', 'answered'
-  notification_token String?   @db.VarChar(255) // 通知用トークン
+  notification_token String?   @unique @db.VarChar(255) // Added @unique for faster lookups if tokens are unique
   created_at         DateTime  @default(now())
   updated_at         DateTime  @updatedAt
   answers            Answer[]
   likes              Like[]
   comments           Comment[]
+
+  @@index([status])
+  @@index([category])
+  @@index([created_at])
+  // notification_token is already unique, which implies an index
 }
 
 model Answer {
@@ -34,6 +39,9 @@ model Answer {
   responder   String   @db.VarChar(20) // '俺' or 'たま'
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
+
+  @@index([question_id]) // Explicitly define for clarity, though Prisma does it for relations
+  @@index([created_at])
 }
 
 model Like {
@@ -54,4 +62,7 @@ model Comment {
   commenter_name String   @default("匿名") @db.VarChar(50)
   ip_address     String?  @db.Inet // Prisma doesn't have Inet, use String and handle validation at app level or use native type if possible later
   created_at     DateTime @default(now())
+
+  @@index([question_id]) // Explicitly define
+  @@index([created_at])
 }

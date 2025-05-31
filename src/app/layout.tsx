@@ -4,8 +4,19 @@ import "./globals.css";
 import Header from "@/components/Header"; // Import Header
 
 export const metadata: Metadata = {
-  title: "AI 極太相談室",
-  description: "AI と都市伝説の Q&A サイト",
+  title: {
+    default: "AI極太相談室", // Default title for pages that don't set their own
+    template: "%s | AI極太相談室", // Template for pages that do set a title
+  },
+  description: "AI、都市伝説、その他の疑問を解決するQ&Aサイト「AI極太相談室」。匿名で質問し、俺とたまが回答します。",
+  keywords: "AI, 都市伝説, Q&A, 質問, 回答, 匿名相談",
+  // Optional: Add Open Graph default image, etc.
+  // openGraph: {
+  //   title: 'AI極太相談室',
+  //   description: 'AI、都市伝説、その他の疑問を解決するQ&Aサイト。',
+  //   type: 'website',
+  //   // images: [{ url: '/default-og-image.png' }], // Needs an image in /public
+  // },
 };
 
 export default function RootLayout({

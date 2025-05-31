@@ -79,7 +79,7 @@ export default function CommentForm({ questionId, onCommentAdded }: CommentFormP
       <button
         type="submit"
         disabled={isSubmitting}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 transition-colors duration-150 ease-in-out"
       >
         {isSubmitting ? '投稿中...' : 'コメントする'}
       </button>

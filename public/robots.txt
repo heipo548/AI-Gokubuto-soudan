@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Allow: /question/
+
+Disallow: /api/
+Disallow: /admin/
+
+Sitemap: [URL_TO_SITEMAP_IF_EXISTS_LATER]/sitemap.xml
+# Add sitemap URL later if a sitemap is generated
