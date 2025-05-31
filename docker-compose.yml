@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  nextjs:
+    build:
+      context: .
+      target: dev          # 開発フェーズ
+    volumes:
+      - .:/app             # ソースコードのライブマウント
+      - node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_TELEMETRY_DISABLED=1
+
+volumes:
+  node_modules:
