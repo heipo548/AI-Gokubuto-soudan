@@ -16,6 +16,7 @@ interface FullQuestionData extends QuestionProps {
   _count: { likes: number };
   status: string; // Add status to FullQuestionData
   updated_at: string; // Add updated_at to track changes in answers
+  submitter_nickname?: string | null; // Add submitter_nickname
 }
 
 // NotificationStatus is not used in this version of the code, can be removed if not planned for future use.
@@ -142,6 +143,7 @@ export default function QuestionPage() {
         content={questionData.content}
         category={questionData.category}
         created_at={questionData.created_at}
+            submitter_nickname={questionData.submitter_nickname}
       />
       <AnswerSection answers={questionData.answers} />
       <InteractionSection

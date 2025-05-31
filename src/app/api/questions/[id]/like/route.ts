@@ -30,7 +30,7 @@ export async function POST(
       const newLike = await prisma.like.create({
         data: {
           question_id: questionId,
-          ip_address: ipAddress || 'unknown', // Store something if IP is not found
+          ip_address: ipAddress || null, // Store null if IP is not found
         },
       });
       // Return the new like count

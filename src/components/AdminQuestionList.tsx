@@ -54,7 +54,7 @@ export default function AdminQuestionList({ filterStatus }: AdminQuestionListPro
           <tr>
             <th className="text-left py-3 px-4">タイトル</th>
             <th className="text-left py-3 px-4">ステータス</th>
-            <th className="text-left py-3 px-4">投稿日時</th>
+                <th className="text-left py-3 px-4">投稿日</th>
             <th className="text-left py-3 px-4">アクション</th>
           </tr>
         </thead>

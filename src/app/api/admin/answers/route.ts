@@ -43,6 +43,10 @@ export async function POST(request: Request) {
     let uploadedImageUrl: string | undefined = undefined;
 
     if (imageFile && imageFile.size > 0) {
+      if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+        console.error('Cloudinary environment variables are not set.');
+        return NextResponse.json({ error: 'Server configuration error: Image upload service is not configured.' }, { status: 500 });
+      }
       // Convert File stream to buffer
       const imageBuffer = await streamToBuffer(imageFile.stream() as any as Readable);
 

@@ -39,7 +39,7 @@ export async function POST(
         question_id: questionId,
         content,
         commenter_name: commenter_name || '匿名', // Default to 匿名 if not provided
-        ip_address: ipAddress || 'unknown',
+        ip_address: ipAddress || null,
       },
     });
     return NextResponse.json(newComment, { status: 201 });

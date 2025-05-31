@@ -32,12 +32,14 @@ export async function GET(request: Request) { // Add request parameter
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, content, category, notification_token } = body;
+    const { title, content, category, notification_token, submitter_nickname } = body;
 
     // Basic validation (more comprehensive validation should be added)
     if (!title || !content) {
       return NextResponse.json({ error: 'Title and content are required' }, { status: 400 });
     }
+
+    const finalNickname = submitter_nickname && submitter_nickname.trim() !== '' ? submitter_nickname.trim() : '匿名さん';
 
     const newQuestion = await prisma.question.create({
       data: {
@@ -45,6 +47,7 @@ export async function POST(request: Request) {
         content,
         category,
         notification_token,
+        submitter_nickname: finalNickname, // Use the processed nickname
         // status is 'pending' by default
       },
     });
