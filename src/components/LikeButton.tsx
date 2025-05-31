@@ -68,7 +68,7 @@ export default function LikeButton({ questionId, initialLikes }: LikeButtonProps
                              : 'bg-red-500 hover:bg-red-700 text-white'}
                     ${isLoading ? 'opacity-50 cursor-wait' : ''}`}
       >
-        {isLiked ? 'いいね済み' : 'いいね！'} ({likes})
+        いいね！ ({likes})
       </button>
       {error && <p className="text-red-500 text-sm">{error}</p>}
     </div>

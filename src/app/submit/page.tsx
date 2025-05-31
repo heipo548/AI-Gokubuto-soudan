@@ -28,6 +28,10 @@ export default function SubmitPage() {
       setError('タイトルと質問内容は必須です。');
       return;
     }
+    if (!category) { // Assuming the default "選択してください" option has value=""
+      setError('カテゴリーを選択してください。');
+      return;
+    }
 
     setIsSubmitting(true);
     const currentToken = notificationToken || generateToken();
@@ -114,7 +118,7 @@ export default function SubmitPage() {
 
         <div className="mb-6">
           <label htmlFor="category" className="block text-gray-700 font-bold mb-2">
-            カテゴリ (任意)
+            カテゴリー <span className="text-red-500">*</span>
           </label>
           <select
             id="category"
@@ -131,7 +135,7 @@ export default function SubmitPage() {
 
         <div className="mb-6">
           <label htmlFor="submitterNickname" className="block text-gray-700 font-bold mb-2">
-            ニックネーム (任意, 100文字以内)
+            ニックネーム（任意）
           </label>
           <input
             type="text"

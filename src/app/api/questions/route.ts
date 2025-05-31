@@ -39,6 +39,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Title and content are required' }, { status: 400 });
     }
 
+    const allowedCategories = ['AI', '都市伝説', 'その他'];
+    if (!category || !allowedCategories.includes(category)) {
+      return NextResponse.json({ error: '有効なカテゴリーを選択してください。' }, { status: 400 });
+    }
+
     const finalNickname = submitter_nickname && submitter_nickname.trim() !== '' ? submitter_nickname.trim() : '匿名さん';
 
     const newQuestion = await prisma.question.create({
@@ -53,8 +58,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(newQuestion, { status: 201 });
   } catch (error) {
-    console.error('Error creating question:', error);
-    // Consider more specific error handling for Prisma errors if needed
-    return NextResponse.json({ error: 'Failed to create question' }, { status: 500 });
+    console.error('Error creating question:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+    return NextResponse.json({ error: 'Failed to create question. Please check server logs for details.' }, { status: 500 });
   }
 }
