@@ -28,11 +28,6 @@ export default function SubmitPage() {
       setError('タイトルと質問内容は必須です。');
       return;
     }
-    if (!category) { // Assuming the default "選択してください" option has value=""
-      setError('カテゴリーを選択してください。');
-      return;
-    }
-
     setIsSubmitting(true);
     const currentToken = notificationToken || generateToken();
     if (!notificationToken) {

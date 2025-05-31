@@ -1,40 +1,47 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+// src/app/api/admin/questions/[id]/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '@/lib/prisma'; // Assuming prisma client is setup at lib/prisma
 
-// PUT /api/admin/questions/[id] - Update question status
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  // TODO: Implement authentication/authorization for admin access
+interface DeleteParams {
+  params: {
+    id: string;
+  };
+}
+
+export async function DELETE(request: NextRequest, { params }: DeleteParams) {
+  const { id } = params;
+
+  if (!id || isNaN(parseInt(id))) {
+    return NextResponse.json({ error: 'Valid Question ID is required' }, { status: 400 });
+  }
+
+  const questionId = parseInt(id);
+
+  console.log(`Attempting to delete question with ID (from API route): ${questionId}`);
+
   try {
-    const id = parseInt(params.id, 10);
-    if (isNaN(id)) {
-      return NextResponse.json({ error: 'Invalid question ID' }, { status: 400 });
-    }
-
-    const body = await request.json();
-    const { status } = body; // e.g., 'pending', 'answered'
-
-    if (!status || (status !== 'pending' && status !== 'answered')) {
-      return NextResponse.json({ error: 'Invalid status value. Must be "pending" or "answered".' }, { status: 400 });
-    }
-
-    const updatedQuestion = await prisma.question.update({
-      where: { id },
-      data: { status },
+    // Attempt to delete the question
+    // Prisma will automatically handle cascading deletes for related answers
+    // if the schema is set up correctly with onDelete: Cascade
+    await prisma.question.delete({
+      where: {
+        id: questionId,
+      },
     });
 
-    if (!updatedQuestion) {
-      return NextResponse.json({ error: 'Question not found or failed to update' }, { status: 404 });
+    console.log(`Successfully deleted question with ID: ${questionId}`);
+    return NextResponse.json({ message: `Question ${questionId} deleted successfully` }, { status: 200 });
+
+  } catch (error: any) {
+    console.error(`Error deleting question ${questionId}:`, error);
+
+    // Check if the error is because the record was not found
+    // Prisma's P2025 error code indicates "Record to delete not found."
+    if (error.code === 'P2025') {
+      return NextResponse.json({ error: `Question with ID ${questionId} not found` }, { status: 404 });
     }
-    return NextResponse.json(updatedQuestion);
-  } catch (error) {
-    console.error(`Error updating question ${params.id} status:`, error);
-    // Add specific error handling for Prisma P2025 (Record to update not found)
-    if ((error as any).code === 'P2025') {
-         return NextResponse.json({ error: 'Question not found' }, { status: 404 });
-    }
-    return NextResponse.json({ error: 'Failed to update question status' }, { status: 500 });
+
+    // For other errors, return a generic server error
+    return NextResponse.json({ error: 'Failed to delete question due to a server error' }, { status: 500 });
   }
 }
