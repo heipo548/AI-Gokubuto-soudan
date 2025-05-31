@@ -23,7 +23,6 @@ model Question {
   answers            Answer[]
   likes              Like[]
   comments           Comment[]
-  nannoJikanDayoCount Int @default(0)
 
   @@index([status])
   @@index([category])
