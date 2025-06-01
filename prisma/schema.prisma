@@ -51,7 +51,7 @@ model Like {
   id          Int      @id @default(autoincrement())
   question    Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
   question_id Int
-  ip_address  String?  @db.Inet // Prisma doesn't have Inet, use String and handle validation at app level or use native type if possible later
+  ip_address  String?  @db.VarChar(45) // IPv6対応のため45文字
   created_at  DateTime @default(now())
 
   @@unique([question_id, ip_address])
@@ -63,22 +63,21 @@ model Comment {
   question_id    Int
   content        String
   commenter_name String   @default("匿名") @db.VarChar(50)
-  ip_address     String?  @db.Inet // Prisma doesn't have Inet, use String and handle validation at app level or use native type if possible later
+  ip_address     String?  @db.VarChar(45) // IPv6対応のため45文字
   created_at     DateTime @default(now())
 
-  @@index([question_id]) // Explicitly define
+  @@index([question_id])
   @@index([created_at])
 }
 
-// 追加: なんの時間だよクリック用のモデル
 model NannoJikanDayoClick {
   id          Int      @id @default(autoincrement())
   question    Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
   question_id Int
-  ip_address  String?  @db.Inet
+  ip_address  String?  @db.VarChar(45) // IPv6対応のため45文字
   created_at  DateTime @default(now())
 
-  @@unique([question_id, ip_address]) // 同じIPから同じ質問への重複クリックを防ぐ
+  @@unique([question_id, ip_address])
   @@index([question_id])
   @@index([created_at])
 }
