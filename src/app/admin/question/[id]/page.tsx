@@ -57,7 +57,7 @@ export default function AnswerEditorPage() {
 
   useEffect(() => {
     if (id && isAuthenticated) {
-      async function fetchQuestionAndAnswer() {
+  const fetchQuestionAndAnswer = async () => {
         setIsLoadingQuestion(true);
         setError(null);
         try {

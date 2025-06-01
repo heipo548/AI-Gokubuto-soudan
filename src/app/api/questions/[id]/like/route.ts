@@ -17,8 +17,7 @@ export async function POST(
     // Getting IP address in Next.js API routes can be tricky.
     // 'request-ip' is one way, or use headers.
     // Note: IP can be spoofed. For robust unique "anonymous" liking, other strategies might be needed.
-    const ipAddress = getClientIp(request);
-
+   const ipAddress = getClientIp(request as any);
     // Check if question exists
     const question = await prisma.question.findUnique({ where: { id: questionId } });
     if (!question) {

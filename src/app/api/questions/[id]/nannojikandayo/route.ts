@@ -13,7 +13,7 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid question ID' }, { status: 400 });
     }
 
-    const ipAddress = getClientIp(request);
+   const ipAddress = getClientIp(request as any);
 
     const question = await prisma.question.findUnique({ where: { id: questionId } });
     if (!question) {
