@@ -8,6 +8,7 @@ jest.mock('@/lib/prisma', () => ({
   question: {
     findMany: jest.fn(),
     count: jest.fn(),
+    findFirst: jest.fn(), // Added for previous/next question logic
   },
 }));
 
@@ -25,7 +26,130 @@ describe('GET /api/questions', () => {
     // Reset mocks before each test
     (prisma.question.findMany as jest.Mock).mockReset();
     (prisma.question.count as jest.Mock).mockReset();
+    (prisma.question.findFirst as jest.Mock).mockReset(); // Reset for previous/next tests
   });
+
+  // Keep existing tests for original functionality
+  describe('Original Question Listing Logic', () => {
+    test('Test Case 1: Default parameters', async () => {
+      const mockQuestions = [{ id: '1', title: 'Test Question' }];
+      // ... (rest of existing test remains the same)
+    });
+    // ... other existing tests ...
+  }); // End of Original Question Listing Logic
+
+
+  // New describe block for Previous/Next Question ID Logic
+  describe('Previous/Next Question ID Logic', () => {
+    const currentQuestionId = 'current-id';
+    const currentQuestionCreatedAt = new Date().toISOString();
+
+    test('should return previous and next question IDs when both exist', async () => {
+      (prisma.question.findFirst as jest.Mock)
+        .mockResolvedValueOnce({ id: 'prev-id' }) // Previous question
+        .mockResolvedValueOnce({ id: 'next-id' }); // Next question
+
+      const request = mockRequest({
+        currentQuestionId,
+        currentQuestionCreatedAt,
+      });
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.previousQuestionId).toBe('prev-id');
+      expect(data.nextQuestionId).toBe('next-id');
+      expect(prisma.question.findFirst).toHaveBeenCalledTimes(2);
+      expect(prisma.question.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+        where: { created_at: { lt: new Date(currentQuestionCreatedAt) }, id: { not: currentQuestionId } },
+        orderBy: { created_at: 'desc' },
+        select: { id: true },
+      }));
+      expect(prisma.question.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+        where: { created_at: { gt: new Date(currentQuestionCreatedAt) }, id: { not: currentQuestionId } },
+        orderBy: { created_at: 'asc' },
+        select: { id: true },
+      }));
+    });
+
+    test('should return null for previousQuestionId if none exists', async () => {
+      (prisma.question.findFirst as jest.Mock)
+        .mockResolvedValueOnce(null) // No previous question
+        .mockResolvedValueOnce({ id: 'next-id' }); // Next question
+
+      const request = mockRequest({
+        currentQuestionId,
+        currentQuestionCreatedAt,
+      });
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(data.previousQuestionId).toBeNull();
+      expect(data.nextQuestionId).toBe('next-id');
+    });
+
+    test('should return null for nextQuestionId if none exists', async () => {
+      (prisma.question.findFirst as jest.Mock)
+        .mockResolvedValueOnce({ id: 'prev-id' }) // Previous question
+        .mockResolvedValueOnce(null); // No next question
+
+      const request = mockRequest({
+        currentQuestionId,
+        currentQuestionCreatedAt,
+      });
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(data.previousQuestionId).toBe('prev-id');
+      expect(data.nextQuestionId).toBeNull();
+    });
+
+    test('should return null for both if no other questions exist', async () => {
+      (prisma.question.findFirst as jest.Mock)
+        .mockResolvedValueOnce(null) // No previous question
+        .mockResolvedValueOnce(null); // No next question
+
+      const request = mockRequest({
+        currentQuestionId,
+        currentQuestionCreatedAt,
+      });
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(data.previousQuestionId).toBeNull();
+      expect(data.nextQuestionId).toBeNull();
+    });
+
+     test('should handle errors gracefully when fetching prev/next IDs', async () => {
+      (prisma.question.findFirst as jest.Mock).mockRejectedValue(new Error('DB error'));
+      const request = mockRequest({
+        currentQuestionId,
+        currentQuestionCreatedAt,
+      });
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(data.error).toBe('Failed to fetch data');
+    });
+
+    test('should not call findMany or count when fetching prev/next IDs', async () => {
+      (prisma.question.findFirst as jest.Mock).mockResolvedValue(null); // Does not matter what it returns
+      const request = mockRequest({
+        currentQuestionId,
+        currentQuestionCreatedAt,
+      });
+      await GET(request);
+      expect(prisma.question.findMany).not.toHaveBeenCalled();
+      expect(prisma.question.count).not.toHaveBeenCalled();
+    });
+  }); // End of Previous/Next Question ID Logic
+
+  // Original tests continue from here, ensure they are outside the new describe block
+  // but within the main describe for 'GET /api/questions'
+  // The diff tool should handle placing this correctly relative to existing tests.
+  // For clarity, I am assuming the existing tests were wrapped into 'Original Question Listing Logic'
+  // If they were not, the structure would be slightly different, but the new describe block would still be added.
 
   test('Test Case 1: Default parameters', async () => {
     const mockQuestions = [{ id: '1', title: 'Test Question' }];
@@ -176,4 +300,14 @@ describe('GET /api/questions', () => {
       where: {}, // Empty where clause
     }));
   });
-});
+  // Ensure error handling for listing mode is also present if not already
+  test('Error handling in listing mode', async () => {
+    (prisma.question.findMany as jest.Mock).mockRejectedValue(new Error('DB Error'));
+    const request = mockRequest({ page: '1' });
+    const response = await GET(request);
+    const body = await response.json();
+    expect(response.status).toBe(500);
+    expect(body.error).toBe('Failed to fetch data');
+   });
+
+}); // End of main describe 'GET /api/questions'
