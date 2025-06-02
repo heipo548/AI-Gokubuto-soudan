@@ -7,6 +7,7 @@ import QuestionDetailDisplay, { QuestionProps } from '@/components/QuestionDetai
 import AnswerSection, { AnswerProps as AnswerData } from '@/components/AnswerSection'; // Ensure AnswerProps is exported or defined
 import InteractionSection from '@/components/InteractionSection';
 import ReturnToHomeButton from '@/components/ReturnToHomeButton';
+import QuestionNavigation from '@/components/QuestionNavigation'; // New import
 import { Comment } from '@prisma/client'; // Or local interface
 import Spinner from '@/components/Spinner'; // Import Spinner
 
@@ -47,6 +48,8 @@ export default function QuestionPage() {
   const [questionData, setQuestionData] = useState<FullQuestionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [previousQuestionId, setPreviousQuestionId] = useState<string | null>(null);
+  const [nextQuestionId, setNextQuestionId] = useState<string | null>(null);
 
   const [showAnswerNotification, setShowAnswerNotification] = useState(false);
   const [userNotificationToken, setUserNotificationToken] = useState<string | null>(null);
@@ -64,9 +67,31 @@ export default function QuestionPage() {
       }
       const data: FullQuestionData = await response.json();
       setQuestionData(data);
+
+      // Fetch navigation data
+      if (data && data.created_at) {
+        try {
+          const navResponse = await fetch(`/api/questions?currentQuestionId=${id}&currentQuestionCreatedAt=${data.created_at}`);
+          if (navResponse.ok) {
+            const navData = await navResponse.json();
+            setPreviousQuestionId(navData.previousQuestionId);
+            setNextQuestionId(navData.nextQuestionId);
+          } else {
+            console.error('Failed to fetch navigation question IDs');
+            setPreviousQuestionId(null);
+            setNextQuestionId(null);
+          }
+        } catch (navError) {
+          console.error('Error fetching navigation question IDs:', navError);
+          setPreviousQuestionId(null);
+          setNextQuestionId(null);
+        }
+      }
       return data; // Return data for title update
     } catch (err: any) {
       setError(err.message);
+      setPreviousQuestionId(null); // Also clear nav IDs on main data fetch error
+      setNextQuestionId(null);
       return null;
     } finally {
       setLoading(false);
@@ -156,6 +181,9 @@ export default function QuestionPage() {
         initialNannoJikanDayoClicks={questionData._count?.nannoJikanDayoClicks || 0} // Add this
         initialComments={questionData.comments || []}
       />
+
+      <QuestionNavigation previousQuestionId={previousQuestionId} nextQuestionId={nextQuestionId} />
+
       <div className="flex justify-center mt-8">
         <ReturnToHomeButton />
       </div>

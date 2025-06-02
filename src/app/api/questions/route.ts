@@ -2,49 +2,96 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
 // GET /api/questions - Fetch all questions
-export async function GET(request: Request) { // Add request parameter
+export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url); // Get searchParams from request.url
-    const category = searchParams.get('category');
-    const sort = searchParams.get('sort'); // Add sort parameter
-    const pageParam = searchParams.get('page');
-    const limitParam = searchParams.get('limit'); // Though we'll hardcode limit to 10 for now
+    const { searchParams } = new URL(request.url);
+    const currentQuestionId = searchParams.get('currentQuestionId');
+    const currentQuestionCreatedAt = searchParams.get('currentQuestionCreatedAt');
 
-    let page = pageParam ? parseInt(pageParam, 10) : 1;
-    if (isNaN(page) || page < 1) {
-      page = 1; // Default to page 1 if parsing fails or page is less than 1
+    if (currentQuestionId && currentQuestionCreatedAt) {
+      const createdAtDate = new Date(currentQuestionCreatedAt);
+
+      // Fetch the previous question
+      const previousQuestion = await prisma.question.findFirst({
+        where: {
+          created_at: {
+            lt: createdAtDate,
+          },
+          id: {
+            not: currentQuestionId, // Exclude the current question itself
+          },
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      // Fetch the next question
+      const nextQuestion = await prisma.question.findFirst({
+        where: {
+          created_at: {
+            gt: createdAtDate,
+          },
+          id: {
+            not: currentQuestionId, // Exclude the current question itself
+          },
+        },
+        orderBy: {
+          created_at: 'asc',
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      return NextResponse.json({
+        previousQuestionId: previousQuestion ? previousQuestion.id : null,
+        nextQuestionId: nextQuestion ? nextQuestion.id : null,
+      });
+
+    } else {
+      // Existing logic for fetching a list of questions
+      const category = searchParams.get('category');
+      const sort = searchParams.get('sort');
+      const pageParam = searchParams.get('page');
+      // const limitParam = searchParams.get('limit'); // Though we'll hardcode limit to 10 for now
+
+      let page = pageParam ? parseInt(pageParam, 10) : 1;
+      if (isNaN(page) || page < 1) {
+        page = 1; // Default to page 1 if parsing fails or page is less than 1
+      }
+      const limit = 10; // Hardcoded to 10 as per user request
+      const skip = (page - 1) * limit;
+
+      const whereClause: any = {};
+      if (category && category.trim() !== '' && category.toLowerCase() !== 'all') {
+        whereClause.category = category;
+      }
+
+      const totalCount = await prisma.question.count({
+        where: whereClause,
+      });
+
+      const questions = await prisma.question.findMany({
+        where: whereClause,
+        orderBy: getOrderBy(sort),
+        take: limit,
+        skip: skip,
+      });
+
+      return NextResponse.json({
+        questions,
+        totalCount,
+        page,
+        limit,
+      });
     }
-    const limit = 10; // Hardcoded to 10 as per user request
-    const skip = (page - 1) * limit;
-
-    const whereClause: any = {};
-    if (category && category.trim() !== '' && category.toLowerCase() !== 'all') {
-      whereClause.category = category;
-    }
-
-    const totalCount = await prisma.question.count({
-      where: whereClause,
-    });
-
-    const questions = await prisma.question.findMany({
-      where: whereClause,
-      orderBy: getOrderBy(sort), // Use a helper function for orderBy
-      take: limit,
-      skip: skip,
-      // Optionally include like counts here if needed for the main list,
-      // or keep it simpler and let the detail page fetch counts.
-      // For MVP, keeping it simple.
-    });
-
-    return NextResponse.json({
-      questions,
-      totalCount,
-      page,
-      limit,
-    });
   } catch (error) {
-    console.error('Error fetching questions:', error);
-    return NextResponse.json({ error: 'Failed to fetch questions' }, { status: 500 });
+    console.error('Error fetching questions or prev/next IDs:', error);
+    return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
   }
 }
 
