@@ -1,8 +1,9 @@
 // src/app/submit/page.tsx
 'use client'; // For form handling and client-side logic
 
-import { useState } from 'react';
+import { useState } from 'react'; // Changed
 import { useRouter } from 'next/navigation'; // For redirecting after submission
+import Link from 'next/link'; // Added
 
 export default function SubmitPage() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function SubmitPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false); // Added
 
   // Generate a simple UUID-like token for notifications (client-side)
   // In a real app, this might be handled more robustly or on the backend
@@ -23,6 +25,11 @@ export default function SubmitPage() {
     e.preventDefault();
     setError(null);
     setSuccessMessage(null);
+
+    if (!agreedToTerms) { // Added
+      setError('利用規約に同意してください。');
+      return;
+    }
 
     if (!title.trim() || !content.trim()) {
       setError('タイトルと質問内容は必須です。');
@@ -64,6 +71,7 @@ export default function SubmitPage() {
       setCategory('');
       setSubmitterNickname('');
       setNotificationToken(''); // Reset for the next submission
+      setAgreedToTerms(false); // Reset checkbox state
       // Optional: Redirect after a delay or provide a link to the question
       // router.push(`/question/${newQuestion.id}`);
     } catch (err: any) {
@@ -146,11 +154,29 @@ export default function SubmitPage() {
             A user could also be allowed to input a pre-existing one if they want to link a question.
         */}
 
+        <div className="mb-6"> {/* Added */}
+          <label htmlFor="agreedToTerms" className="inline-flex items-center">
+            <input
+              type="checkbox"
+              id="agreedToTerms"
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              className="form-checkbox h-5 w-5 text-blue-600"
+            />
+            <span className="ml-2 text-gray-700">
+              <Link href="/terms" target="_blank" className="text-blue-500 hover:underline">
+                利用規約
+              </Link>
+              に同意する
+            </span>
+          </label>
+        </div>
+
         <div className="flex items-center justify-between">
           <button
             type="submit"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !agreedToTerms} // Changed
           >
             {isSubmitting ? '投稿中...' : '投稿する'}
           </button>
