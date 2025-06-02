@@ -10,6 +10,7 @@ export async function GET(request: Request) {
 
     if (currentQuestionId && currentQuestionCreatedAt) {
       const createdAtDate = new Date(currentQuestionCreatedAt);
+      const currentQuestionIdInt = parseInt(currentQuestionId, 10); // Convert to integer
 
       // Fetch the previous question
       const previousQuestion = await prisma.question.findFirst({
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
             lt: createdAtDate,
           },
           id: {
-            not: currentQuestionId, // Exclude the current question itself
+            not: currentQuestionIdInt, // Use integer id
           },
         },
         orderBy: {
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
             gt: createdAtDate,
           },
           id: {
-            not: currentQuestionId, // Exclude the current question itself
+            not: currentQuestionIdInt, // Use integer id
           },
         },
         orderBy: {
@@ -99,9 +100,9 @@ export async function GET(request: Request) {
 function getOrderBy(sort: string | null) {
   switch (sort) {
     case 'likes':
-      return { likes_count: 'desc' };
+      return { likes: { _count: 'desc' } };
     case 'nannotokis':
-      return { nanno_jikan_dayo_count: 'desc' };
+      return { nannoJikanDayoClicks: { _count: 'desc' } };
     case 'createdAt':
     default:
       return { created_at: 'desc' };
