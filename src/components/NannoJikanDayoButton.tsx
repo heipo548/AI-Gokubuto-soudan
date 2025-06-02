@@ -82,7 +82,7 @@ export default function NannoJikanDayoButton({ questionId, initialCount }: Nanno
   };
 
   return (
-    <div className="flex flex-col items-start space-y-2">
+    <div className="flex flex-col items-start space-y-2 relative"> {/* Added relative for potential future positioning needs, not strictly necessary for fixed popup */}
       <button
         onClick={handleClick}
         disabled={isLoading} // Only disable while loading, allow re-clicks if already isClicked to show message again
@@ -93,9 +93,9 @@ export default function NannoJikanDayoButton({ questionId, initialCount }: Nanno
       >
         何の時間だよ ({count})
       </button>
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {error && <p className="text-red-500 text-sm mt-2">{error}</p>} {/* Added mt-2 for spacing if message is also shown */}
       {displayedMessage && (
-        <div className="mt-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 p-6 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 shadow-xl rounded-lg">
           <p className="text-xl font-semibold">{displayedMessage}</p>
         </div>
       )}
