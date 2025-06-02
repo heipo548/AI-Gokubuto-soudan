@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import QuestionDetailDisplay, { QuestionProps } from '@/components/QuestionDetail'; // Ensure QuestionProps is exported or defined
 import AnswerSection, { AnswerProps as AnswerData } from '@/components/AnswerSection'; // Ensure AnswerProps is exported or defined
 import InteractionSection from '@/components/InteractionSection';
+import ReturnToHomeButton from '@/components/ReturnToHomeButton';
 import { Comment } from '@prisma/client'; // Or local interface
 import Spinner from '@/components/Spinner'; // Import Spinner
 
@@ -155,6 +156,9 @@ export default function QuestionPage() {
         initialNannoJikanDayoClicks={questionData._count?.nannoJikanDayoClicks || 0} // Add this
         initialComments={questionData.comments || []}
       />
+      <div className="flex justify-center mt-8">
+        <ReturnToHomeButton />
+      </div>
     </div>
   );
 }
