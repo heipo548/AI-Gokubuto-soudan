@@ -15,13 +15,14 @@ export default function QuestionList({ selectedCategory }: QuestionListProps) {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [currentSort, setCurrentSort] = useState<string>('createdAt'); // Added sort state
   const limit = 10; // Fixed limit as per requirements
 
   const fetchQuestions = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      let url = `/api/questions?page=${currentPage}&limit=${limit}`;
+      let url = `/api/questions?page=${currentPage}&limit=${limit}&sort=${currentSort}`; // Added sort to URL
       if (selectedCategory && selectedCategory.toLowerCase() !== 'all') {
         url += `&category=${encodeURIComponent(selectedCategory)}`;
       } else {
@@ -44,7 +45,7 @@ export default function QuestionList({ selectedCategory }: QuestionListProps) {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, selectedCategory, limit]);
+  }, [currentPage, selectedCategory, limit, currentSort]); // Added currentSort dependency
 
   useEffect(() => {
     fetchQuestions();
@@ -54,6 +55,11 @@ export default function QuestionList({ selectedCategory }: QuestionListProps) {
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedCategory]);
+
+  // Reset to page 1 when sort order changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [currentSort]);
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
@@ -77,6 +83,22 @@ export default function QuestionList({ selectedCategory }: QuestionListProps) {
 
   return (
     <div>
+      <div className="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow">
+        <label htmlFor="sort-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          並び替え:
+        </label>
+        <select
+          id="sort-select"
+          value={currentSort}
+          onChange={(e) => setCurrentSort(e.target.value)}
+          className="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+        >
+          <option value="createdAt">投稿日時順</option>
+          <option value="likes">いいね数順</option>
+          <option value="nannotokis">「何の時間だよ」数順</option>
+        </select>
+      </div>
+
       {questions.length > 0 ? (
         questions.map((question) => (
           <QuestionCard key={question.id} {...question} />

@@ -6,6 +6,7 @@ export async function GET(request: Request) { // Add request parameter
   try {
     const { searchParams } = new URL(request.url); // Get searchParams from request.url
     const category = searchParams.get('category');
+    const sort = searchParams.get('sort'); // Add sort parameter
     const pageParam = searchParams.get('page');
     const limitParam = searchParams.get('limit'); // Though we'll hardcode limit to 10 for now
 
@@ -27,9 +28,7 @@ export async function GET(request: Request) { // Add request parameter
 
     const questions = await prisma.question.findMany({
       where: whereClause,
-      orderBy: {
-        created_at: 'desc',
-      },
+      orderBy: getOrderBy(sort), // Use a helper function for orderBy
       take: limit,
       skip: skip,
       // Optionally include like counts here if needed for the main list,
@@ -46,6 +45,19 @@ export async function GET(request: Request) { // Add request parameter
   } catch (error) {
     console.error('Error fetching questions:', error);
     return NextResponse.json({ error: 'Failed to fetch questions' }, { status: 500 });
+  }
+}
+
+// Helper function to determine orderBy clause
+function getOrderBy(sort: string | null) {
+  switch (sort) {
+    case 'likes':
+      return { likes_count: 'desc' };
+    case 'nannotokis':
+      return { nanno_jikan_dayo_count: 'desc' };
+    case 'createdAt':
+    default:
+      return { created_at: 'desc' };
   }
 }
 
