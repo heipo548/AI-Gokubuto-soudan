@@ -7,9 +7,10 @@ import Spinner from './Spinner'; // Import Spinner
 
 interface QuestionListProps {
   selectedCategory: string | null; // 'all', 'AI', '都市伝説', 'その他', or null for all
+  searchTerm: string; // Added for search functionality
 }
 
-export default function QuestionList({ selectedCategory }: QuestionListProps) {
+export default function QuestionList({ selectedCategory, searchTerm }: QuestionListProps) {
   const [questions, setQuestions] = useState<QuestionCardProps[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +30,9 @@ export default function QuestionList({ selectedCategory }: QuestionListProps) {
         // Ensure category parameter is not empty if 'all' or null
         url += `&category=all`;
       }
+      if (searchTerm && searchTerm.trim() !== '') {
+        url += `&search=${encodeURIComponent(searchTerm.trim())}`;
+      }
 
       const response = await fetch(url);
       if (!response.ok) {
@@ -45,21 +49,20 @@ export default function QuestionList({ selectedCategory }: QuestionListProps) {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, selectedCategory, limit, currentSort]); // Added currentSort dependency
+  }, [currentPage, selectedCategory, limit, currentSort, searchTerm]); // Added searchTerm dependency
 
   useEffect(() => {
     fetchQuestions();
   }, [fetchQuestions]);
 
-  // Reset to page 1 when category changes
+  // Reset to page 1 when category, sort order, or search term changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategory]);
+  }, [selectedCategory, currentSort, searchTerm]);
 
-  // Reset to page 1 when sort order changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [currentSort]);
+  // Note: The individual useEffects for selectedCategory and currentSort are now combined
+  // into the one above. If they had other side effects, they'd need to be separate.
+  // For just resetting page, one combined useEffect is cleaner.
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
@@ -101,22 +104,22 @@ export default function QuestionList({ selectedCategory }: QuestionListProps) {
 
       {questions.length > 0 ? (
         questions.map((question) => (
-          <QuestionCard key={question.id} {...question} />
+          <QuestionCard key={question.id} {...question} searchTerm={searchTerm} />
         ))
       ) : (
-        !loading && <p className="text-center py-4">該当する質問はありません。</p>
-        // Show "no questions" only if not loading and totalCount is 0 (implicitly, as questions would be empty)
-        // Or if totalCount > 0 but current page has no items (which shouldn't happen with correct totalCount)
+        !loading && (
+          <p className="text-center py-4">
+            {searchTerm && searchTerm.trim() !== '' ? "検索結果がありません。" : "該当する質問はありません。"}
+          </p>
+        )
       )}
 
       {totalCount > 0 && (
         <div className="mt-8 flex flex-col items-center space-y-4">
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            Showing <span className="font-semibold">{startItem}</span>
-            {' - '}
-            <span className="font-semibold">{endItem}</span>
-            {' of '}
-            <span className="font-semibold">{totalCount}</span> questions
+            {searchTerm && searchTerm.trim() !== ''
+              ? `${totalCount}件の検索結果`
+              : `${totalCount}件中 ${startItem} - ${endItem}件表示`}
           </p>
           <div className="flex justify-center items-center space-x-4">
             <button
