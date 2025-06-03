@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { Prisma } from '@prisma/client'; // Prismaの型をインポート
 
 // GET /api/questions - Fetch all questions
 export async function GET(request: Request) {
@@ -9,17 +10,17 @@ export async function GET(request: Request) {
     const currentQuestionCreatedAt = searchParams.get('currentQuestionCreatedAt');
 
     if (currentQuestionId && currentQuestionCreatedAt) {
+      // ... (前後の質問を取得するロジックは変更なし) ...
       const createdAtDate = new Date(currentQuestionCreatedAt);
-      const currentQuestionIdInt = parseInt(currentQuestionId, 10); // Convert to integer
+      const currentQuestionIdInt = parseInt(currentQuestionId, 10);
 
-      // Fetch the previous question
       const previousQuestion = await prisma.question.findFirst({
         where: {
           created_at: {
             lt: createdAtDate,
           },
           id: {
-            not: currentQuestionIdInt, // Use integer id
+            not: currentQuestionIdInt,
           },
         },
         orderBy: {
@@ -30,14 +31,13 @@ export async function GET(request: Request) {
         },
       });
 
-      // Fetch the next question
       const nextQuestion = await prisma.question.findFirst({
         where: {
           created_at: {
             gt: createdAtDate,
           },
           id: {
-            not: currentQuestionIdInt, // Use integer id
+            not: currentQuestionIdInt,
           },
         },
         orderBy: {
@@ -59,22 +59,21 @@ export async function GET(request: Request) {
       const sort = searchParams.get('sort');
       const pageParam = searchParams.get('page');
       const search = searchParams.get('search');
-      // const limitParam = searchParams.get('limit'); // Though we'll hardcode limit to 10 for now
 
       let page = pageParam ? parseInt(pageParam, 10) : 1;
       if (isNaN(page) || page < 1) {
-        page = 1; // Default to page 1 if parsing fails or page is less than 1
+        page = 1;
       }
-      const limit = 10; // Hardcoded to 10 as per user request
+      const limit = 10;
       const skip = (page - 1) * limit;
 
-      const whereClause: any = {};
+      const whereClause: Prisma.QuestionWhereInput = {}; // 型を Prisma.QuestionWhereInput に変更 (推奨)
       if (category && category.trim() !== '' && category.toLowerCase() !== 'all') {
         whereClause.category = category;
       }
 
       if (search && search.trim() !== '') {
-        const keywords = search.trim().split(/\s+/); // Split by one or more spaces
+        const keywords = search.trim().split(/\s+/);
         whereClause.AND = keywords.map(keyword => ({
           OR: [
             {
@@ -99,7 +98,7 @@ export async function GET(request: Request) {
 
       const questions = await prisma.question.findMany({
         where: whereClause,
-        orderBy: getOrderBy(sort),
+        orderBy: getOrderBy(sort), // ここは変更なし
         take: limit,
         skip: skip,
       });
@@ -118,7 +117,8 @@ export async function GET(request: Request) {
 }
 
 // Helper function to determine orderBy clause
-function getOrderBy(sort: string | null) {
+// ★★★ 戻り値に Prisma.QuestionOrderByWithRelationInput 型の注釈を追加 ★★★
+function getOrderBy(sort: string | null): Prisma.QuestionOrderByWithRelationInput {
   switch (sort) {
     case 'likes':
       return { likes: { _count: 'desc' } };
@@ -131,12 +131,12 @@ function getOrderBy(sort: string | null) {
 }
 
 // POST /api/questions - Create a new question
+// ... (POSTメソッドの実装は変更なし) ...
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { title, content, category, notification_token, submitter_nickname } = body;
 
-    // Basic validation (more comprehensive validation should be added)
     if (!title || !content) {
       return NextResponse.json({ error: 'Title and content are required' }, { status: 400 });
     }
@@ -154,8 +154,7 @@ export async function POST(request: Request) {
         content,
         category,
         notification_token,
-        submitter_nickname: finalNickname, // Use the processed nickname
-        // status is 'pending' by default
+        submitter_nickname: finalNickname,
       },
     });
     return NextResponse.json(newQuestion, { status: 201 });
