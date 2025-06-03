@@ -4,17 +4,48 @@ import Link from 'next/link';
 export interface QuestionCardProps {
   id: number;
   title: string;
+  content?: string; // Added content, assuming it might be used or passed in future for full card view
   category?: string | null;
   created_at: string;
   status: string;
+  searchTerm?: string; // Optional: for highlighting search terms
   //いいね数 (likesCount) will be added later
 }
 
-export default function QuestionCard({ id, title, category, created_at, status }: QuestionCardProps) {
+// Helper function to escape regex special characters
+const escapeRegExp = (string: string) => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+};
+
+const highlightText = (text: string | undefined, term: string | undefined) => {
+  if (!text) return '';
+  if (!term || term.trim() === '') {
+    return text;
+  }
+
+  const keywords = term.trim().split(/\s+/).filter(Boolean); // Split by space and remove empty strings
+  if (keywords.length === 0) {
+    return text;
+  }
+
+  // Apply highlighting for each keyword sequentially
+  let highlightedText = text;
+  keywords.forEach(keyword => {
+    const regex = new RegExp(`(${escapeRegExp(keyword)})`, 'gi'); // 'g' for global, 'i' for case-insensitive
+    highlightedText = highlightedText.replace(regex, '<mark>$1</mark>');
+  });
+
+  return highlightedText;
+};
+
+export default function QuestionCard({ id, title, category, created_at, status, searchTerm }: QuestionCardProps) {
   const formattedDate = new Date(created_at).toLocaleDateString('ja-JP');
+  const displayTitle = highlightText(title, searchTerm);
+
   return (
     <Link href={`/question/${id}`} className="block p-4 border rounded-lg shadow hover:bg-gray-100 mb-4 transition-colors duration-150">
-      <h2 className="text-xl md:text-2xl font-semibold mb-2 break-words">{title}</h2>
+      {/* Use dangerouslySetInnerHTML for title because highlightText returns HTML string */}
+      <h2 className="text-xl md:text-2xl font-semibold mb-2 break-words" dangerouslySetInnerHTML={{ __html: displayTitle }} />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm text-gray-600">
         <div className="mb-1 sm:mb-0">
           {category && (

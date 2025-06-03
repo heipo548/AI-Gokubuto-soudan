@@ -58,6 +58,7 @@ export async function GET(request: Request) {
       const category = searchParams.get('category');
       const sort = searchParams.get('sort');
       const pageParam = searchParams.get('page');
+      const search = searchParams.get('search');
       // const limitParam = searchParams.get('limit'); // Though we'll hardcode limit to 10 for now
 
       let page = pageParam ? parseInt(pageParam, 10) : 1;
@@ -70,6 +71,26 @@ export async function GET(request: Request) {
       const whereClause: any = {};
       if (category && category.trim() !== '' && category.toLowerCase() !== 'all') {
         whereClause.category = category;
+      }
+
+      if (search && search.trim() !== '') {
+        const keywords = search.trim().split(/\s+/); // Split by one or more spaces
+        whereClause.AND = keywords.map(keyword => ({
+          OR: [
+            {
+              title: {
+                contains: keyword,
+                mode: 'insensitive',
+              },
+            },
+            {
+              content: {
+                contains: keyword,
+                mode: 'insensitive',
+              },
+            },
+          ],
+        }));
       }
 
       const totalCount = await prisma.question.count({

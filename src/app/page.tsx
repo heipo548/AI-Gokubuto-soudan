@@ -2,6 +2,11 @@
 'use client'; // Needs to be client component for useState
 import { useState } from 'react';
 import Link from 'next/link'; // Make sure Link is imported
+// It's good practice to keep imports alphabetized or grouped, but for this tool, directness is key.
+// For icons, I'll use simple text for now: "Search" and "Clear".
+// If specific icons like magnifying glass or 'x' are required as components (e.g., from a library),
+// that would be a separate step, possibly involving installing an icon library.
+// For now, textual representation will suffice for functionality.
 import QuestionList from '@/components/QuestionList';
 import QuestionSubmitButton from '@/components/QuestionSubmitButton';
 
@@ -9,6 +14,8 @@ const CATEGORIES = ['all', 'AI', '都市伝説', 'その他']; // 'all' maps to 
 
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchInput, setSearchInput] = useState<string>('');
 
   return (
     <div className="container mx-auto p-4">
@@ -39,7 +46,33 @@ export default function HomePage() {
         ))}
       </div>
 
-      <QuestionList selectedCategory={selectedCategory} />
+      {/* Search UI Elements */}
+      <div className="mb-6 flex items-center gap-2">
+        <input
+          type="text"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="キーワード検索..."
+          className="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+        />
+        <button
+          onClick={() => setSearchTerm(searchInput)}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50"
+        >
+          検索 {/* Using text for search icon */}
+        </button>
+        <button
+          onClick={() => {
+            setSearchInput('');
+            setSearchTerm('');
+          }}
+          className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
+        >
+          クリア {/* Using text for clear icon */}
+        </button>
+      </div>
+
+      <QuestionList selectedCategory={selectedCategory} searchTerm={searchTerm} />
 
       {/* Add the new button here */}
       <div className="mt-12 text-center">
