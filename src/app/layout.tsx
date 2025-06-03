@@ -26,9 +26,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className="bg-gray-50"> {/* Added a light background color */}
+      <body className="bg-background-main text-text-primary font-sans">
         <Header /> {/* Add Header here */}
-        <main className="container mx-auto p-4"> {/* Add main tag with some padding */}
+        <main className="container mx-auto py-spacing-m px-spacing-m md:px-[20px] lg:px-spacing-l">
           {children}
         </main>
       </body>
