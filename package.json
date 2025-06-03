@@ -2,8 +2,8 @@
   "name": "ai-qna-site",
   "version": "0.1.0",
   "private": true,
-  "engines": {
-    "node": "20.x"
+   "engines": {
+    "node": "20.x",
     "npm": "10.x"
   },
   "scripts": {
