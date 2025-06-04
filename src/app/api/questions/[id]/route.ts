@@ -14,19 +14,32 @@ export async function GET(
 
     const question = await prisma.question.findUnique({
       where: { id },
-      include: {
-            answers: true, // Existing
-            comments: { // Include comments
-              orderBy: {
-                created_at: 'asc', // Show oldest comments first
-              },
-            },
-            _count: { // Include count of likes
-              select: {
-                likes: true,
-                // nannoJikanDayoClicks: true, ← この行を削除またはコメントアウト
-              },
-            },
+      select: {
+        // Explicitly list all scalar fields you want to return
+        id: true,
+        title: true,
+        content: true,
+        category: true,
+        status: true,
+        notification_token: true,
+        submitter_nickname: true,
+        created_at: true,
+        updated_at: true,
+        admin_conclusion: true, // Added field
+        admin_conclusion_updated_at: true, // Added field
+        // Include relations as before
+        answers: true,
+        comments: {
+          orderBy: {
+            created_at: 'asc',
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            // nannoJikanDayoClicks: true, // Ensure this is commented if not needed
+          },
+        },
       },
     });
 

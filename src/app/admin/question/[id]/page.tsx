@@ -15,6 +15,8 @@ interface QuestionData {
   status: string;
   created_at: string;
   answers: AnswerDataFromServer[];
+  admin_conclusion?: string | null;
+  admin_conclusion_updated_at?: string | null;
 }
 
 interface AnswerDataFromServer {
@@ -39,9 +41,17 @@ export default function AnswerEditorPage() {
   const [existingAnswerId, setExistingAnswerId] = useState<number | null>(null);
 
   const [isLoadingQuestion, setIsLoadingQuestion] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false); // For answer form
+  const [error, setError] = useState<string | null>(null); // For answer form
+  const [successMessage, setSuccessMessage] = useState<string | null>(null); // For answer form
+
+  // New state variables for admin conclusion
+  const [adminConclusion, setAdminConclusion] = useState('');
+  const [initialAdminConclusion, setInitialAdminConclusion] = useState('');
+  const [adminConclusionUpdatedAt, setAdminConclusionUpdatedAt] = useState<string | null>(null);
+  const [isSubmittingConclusion, setIsSubmittingConclusion] = useState(false);
+  const [conclusionError, setConclusionError] = useState<string | null>(null);
+  const [conclusionSuccessMessage, setConclusionSuccessMessage] = useState<string | null>(null);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   useEffect(() => {
@@ -59,25 +69,43 @@ export default function AnswerEditorPage() {
     if (id && isAuthenticated) {
   const fetchQuestionAndAnswer = async () => {
         setIsLoadingQuestion(true);
-        setError(null);
+        setError(null); // Clear answer form error
+        setConclusionError(null); // Clear conclusion error
         try {
-          const response = await fetch(`/api/questions/${id}`);
+          // Use the admin API endpoint to fetch admin-specific fields
+          const response = await fetch(`/api/admin/questions/${id}`);
           if (!response.ok) {
             throw new Error(`Failed to fetch question: ${response.statusText}`);
           }
           const data: QuestionData = await response.json();
           setQuestionData(data);
 
+          // Set answer form fields
           if (data.answers && data.answers.length > 0) {
             const existing = data.answers[0];
             setAnswerContent(existing.content);
             setImageUrl(existing.image_url || '');
             setLinkUrl(existing.link_url || '');
-                setResponder(existing.responder as 'ヘイポー' | 'たま');
+            setResponder(existing.responder as 'ヘイポー' | 'たま');
             setExistingAnswerId(existing.id || null);
+          } else {
+            // Reset answer fields if no answer exists
+            setAnswerContent('');
+            setImageUrl('');
+            setLinkUrl('');
+            setResponder('ヘイポー');
+            setExistingAnswerId(null);
           }
+
+          // Set admin conclusion fields
+          setAdminConclusion(data.admin_conclusion || '');
+          setInitialAdminConclusion(data.admin_conclusion || '');
+          setAdminConclusionUpdatedAt(data.admin_conclusion_updated_at || null);
+
         } catch (err: any) {
+          // Set error for the main question loading part, could be displayed generally
           setError(err.message);
+          console.error("Fetch question error:", err);
         } finally {
           setIsLoadingQuestion(false);
         }
@@ -152,9 +180,14 @@ export default function AnswerEditorPage() {
       }
       setSelectedFile(null);
        if (id && isAuthenticated) {
-            const qResponse = await fetch(`/api/questions/${id}`);
+            // Refetch question data to get latest status and potentially other updates
+            // This will also update admin_conclusion fields if they were changed by another admin
+            const qResponse = await fetch(`/api/admin/questions/${id}`);
             const qData: QuestionData = await qResponse.json();
             setQuestionData(qData);
+            setAdminConclusion(qData.admin_conclusion || '');
+            setInitialAdminConclusion(qData.admin_conclusion || '');
+            setAdminConclusionUpdatedAt(qData.admin_conclusion_updated_at || null);
        }
     } catch (err: any) {
       setError(err.message);
@@ -168,25 +201,141 @@ export default function AnswerEditorPage() {
   }
 
   if (isLoadingQuestion) return <div className="container mx-auto p-4 flex justify-center"><Spinner /></div>;
-  if (error && !questionData) return <div className="container mx-auto p-4"><p className="text-red-500">Error: {error}</p></div>;
-  if (!questionData) return <div className="container mx-auto p-4"><p>質問が見つかりません。</p></div>;
+  if (error && !questionData && !isLoadingQuestion) return <div className="container mx-auto p-4"><p className="text-red-500">Error loading question: {error}</p></div>;
+  if (!questionData && !isLoadingQuestion) return <div className="container mx-auto p-4"><p>質問が見つかりません。</p></div>;
+
+  // Helper to format date
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return '未設定';
+    return new Date(dateString).toLocaleString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  const handleSaveConclusion = async () => {
+    setIsSubmittingConclusion(true);
+    setConclusionError(null);
+    setConclusionSuccessMessage(null);
+
+    if (adminConclusion.length > 500) {
+      setConclusionError('結論は500文字以内で入力してください。');
+      setIsSubmittingConclusion(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/questions/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admin_conclusion: adminConclusion }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '結論の保存に失敗しました。');
+      }
+
+      const updatedQuestion: QuestionData = await response.json();
+      setInitialAdminConclusion(updatedQuestion.admin_conclusion || '');
+      setAdminConclusion(updatedQuestion.admin_conclusion || '');
+      setAdminConclusionUpdatedAt(updatedQuestion.admin_conclusion_updated_at || null);
+      setConclusionSuccessMessage('結論が正常に保存されました。');
+    } catch (err: any) {
+      setConclusionError(err.message);
+    } finally {
+      setIsSubmittingConclusion(false);
+    }
+  };
+
+  const handleClearConclusion = async () => {
+    setIsSubmittingConclusion(true);
+    setConclusionError(null);
+    setConclusionSuccessMessage(null);
+
+    try {
+      const response = await fetch(`/api/admin/questions/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admin_conclusion: null }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '結論のクリアに失敗しました。');
+      }
+
+      const updatedQuestion: QuestionData = await response.json();
+      setAdminConclusion('');
+      setInitialAdminConclusion('');
+      setAdminConclusionUpdatedAt(null);
+      setConclusionSuccessMessage('結論が正常にクリアされました。');
+    } catch (err: any) {
+      setConclusionError(err.message);
+    } finally {
+      setIsSubmittingConclusion(false);
+    }
+  };
 
   return (
     <div className="container mx-auto p-4 max-w-3xl">
       <Link href="/admin" className="text-indigo-600 hover:text-indigo-800 mb-4 inline-block">&larr; 管理者ダッシュボードに戻る</Link>
-      <h1 className="text-3xl font-bold mb-2">回答エディター</h1>
+      <h1 className="text-3xl font-bold mb-6">質問管理</h1>
 
-      <div className="bg-gray-100 p-3 sm:p-4 rounded-lg mb-6"> {/* Adjusted padding */}
-        <h2 className="text-xl font-semibold mb-1">{questionData.title}</h2>
-        <p className="text-sm text-gray-600">カテゴリ: {questionData.category || 'なし'} | ステータス: {questionData.status}</p>
-        <p className="text-sm text-gray-700 mt-2 whitespace-pre-wrap">{questionData.content}</p>
-      </div>
+      {isLoadingQuestion && !questionData && <div className="flex justify-center"><Spinner /></div>}
 
-      <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-4 sm:p-6 md:p-8"> {/* Adjusted padding */}
-        {error && <p className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</p>}
-        {successMessage && <p className="bg-green-100 text-green-700 p-3 rounded mb-4">{successMessage}</p>}
+      {questionData && (
+        <>
+          <div className="bg-gray-100 p-3 sm:p-4 rounded-lg mb-6">
+            <h2 className="text-xl font-semibold mb-1">{questionData.title}</h2>
+            <p className="text-sm text-gray-600">カテゴリ: {questionData.category || 'なし'} | ステータス: {questionData.status}</p>
+            <p className="text-sm text-gray-700 mt-2 whitespace-pre-wrap">{questionData.content}</p>
+          </div>
 
-        <div className="mb-4">
+          {/* Admin Conclusion Section */}
+          <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 md:p-8 mb-8">
+            <h2 className="text-2xl font-semibold mb-4">ヘポたまの結論管理</h2>
+            {conclusionError && <p className="bg-red-100 text-red-700 p-3 rounded mb-4">{conclusionError}</p>}
+            {conclusionSuccessMessage && <p className="bg-green-100 text-green-700 p-3 rounded mb-4">{conclusionSuccessMessage}</p>}
+
+            <div className="mb-4">
+              <label htmlFor="adminConclusion" className="block text-gray-700 font-bold mb-2">結論</label>
+              <textarea
+                id="adminConclusion"
+                value={adminConclusion}
+                onChange={(e) => setAdminConclusion(e.target.value)}
+                rows={5}
+                maxLength={500}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+              <p className="text-sm text-gray-600 mt-1 text-right">{adminConclusion.length} / 500 文字</p>
+            </div>
+
+            {adminConclusionUpdatedAt && (
+              <p className="text-sm text-gray-500 mb-4">最終更新日時: {formatDate(adminConclusionUpdatedAt)}</p>
+            )}
+
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={handleSaveConclusion}
+                className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 transition-colors duration-150 ease-in-out"
+                disabled={isSubmittingConclusion || adminConclusion === initialAdminConclusion}
+              >
+                {isSubmittingConclusion ? '保存中...' : '結論を保存'}
+              </button>
+              <button
+                onClick={handleClearConclusion}
+                className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 transition-colors duration-150 ease-in-out"
+                disabled={isSubmittingConclusion || !initialAdminConclusion}
+              >
+                {isSubmittingConclusion ? 'クリア中...' : '結論をクリア'}
+              </button>
+            </div>
+          </div>
+
+          {/* Existing Answer Form */}
+          <h2 className="text-2xl font-semibold mb-4">回答フォーム</h2>
+          <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-4 sm:p-6 md:p-8">
+            {error && <p className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</p>}
+            {successMessage && <p className="bg-green-100 text-green-700 p-3 rounded mb-4">{successMessage}</p>}
+            <div className="mb-4">
           <label htmlFor="answerContent" className="block text-gray-700 font-bold mb-2">回答内容</label>
           <textarea id="answerContent" value={answerContent} onChange={(e) => setAnswerContent(e.target.value)} rows={10} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required />
         </div>
@@ -218,11 +367,13 @@ export default function AnswerEditorPage() {
         </div>
 
         <div className="flex items-center justify-between">
-          <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 transition-colors duration-150 ease-in-out" disabled={isSubmitting || isLoadingQuestion}>
+          <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 transition-colors duration-150 ease-in-out" disabled={isSubmitting || isLoadingQuestion || !questionData}>
             {isSubmitting ? '処理中...' : (existingAnswerId ? '回答を更新' : '回答を投稿')}
           </button>
         </div>
       </form>
+      </>
+      )}
     </div>
   );
 }

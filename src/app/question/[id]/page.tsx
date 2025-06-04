@@ -22,6 +22,8 @@ interface FullQuestionData extends QuestionProps {
   status: string; // Add status to FullQuestionData
   updated_at: string; // Add updated_at to track changes in answers
   submitter_nickname?: string | null; // Add submitter_nickname
+  admin_conclusion?: string | null; // Added for Hepotama's conclusion
+  admin_conclusion_updated_at?: string | null; // Added for Hepotama's conclusion timestamp
 }
 
 // NotificationStatus is not used in this version of the code, can be removed if not planned for future use.
@@ -53,6 +55,7 @@ export default function QuestionPage() {
 
   const [showAnswerNotification, setShowAnswerNotification] = useState(false);
   const [userNotificationToken, setUserNotificationToken] = useState<string | null>(null);
+  const [showAdminConclusionModal, setShowAdminConclusionModal] = useState(false); // New state for admin conclusion modal
 
   // Fetch initial question data
   const fetchQuestionData = useCallback(async () => {
@@ -149,10 +152,26 @@ export default function QuestionPage() {
   if (error) return <div className="container mx-auto p-4"><p className="text-red-500">Error: {error}</p></div>;
   if (!questionData) return <div className="container mx-auto p-4"><p>Question not found.</p></div>;
 
+  const formatAdminConclusionDate = (dateString: string | null | undefined) => {
+    if (!dateString) return null;
+    try {
+      return new Date(dateString).toLocaleString('ja-JP', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (e) {
+      console.error("Error formatting admin conclusion date:", e);
+      return "日付不明";
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 relative">
       {showAnswerNotification && (
-        <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-md shadow-lg animate-fadeIn" role="alert"> {/* Added simple fadeIn animation suggestion */}
+        <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-md shadow-lg animate-fadeIn" role="alert">
           <div className="flex">
             <div className="py-1"><svg className="fill-current h-6 w-6 text-green-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/></svg></div>
             <div>
@@ -175,6 +194,51 @@ export default function QuestionPage() {
             submitter_nickname={questionData.submitter_nickname}
       />
       <AnswerSection answers={questionData.answers} />
+
+      {/* Hepotama's Conclusion Button and Modal */}
+      {questionData.admin_conclusion && (
+        <div className="my-6 text-center">
+          <button
+            onClick={() => setShowAdminConclusionModal(true)}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+          >
+            <span role="img" aria-label="tama" className="mr-2"> Tama </span>ヘポたまの結論を見る
+          </button>
+        </div>
+      )}
+
+      {showAdminConclusionModal && questionData.admin_conclusion && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 transition-opacity duration-300 ease-in-out opacity-100">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg animate-fadeIn">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-purple-700">ヘポたまの結論</h2>
+              <button
+                onClick={() => setShowAdminConclusionModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+                aria-label="閉じる"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none mb-4 whitespace-pre-wrap">
+              {questionData.admin_conclusion}
+            </div>
+            {questionData.admin_conclusion_updated_at && (
+              <p className="text-xs text-gray-500 mt-4">
+                最終更新: {formatAdminConclusionDate(questionData.admin_conclusion_updated_at)}
+              </p>
+            )}
+            <button
+              onClick={() => setShowAdminConclusionModal(false)}
+              className="mt-6 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full transition-colors duration-150 ease-in-out"
+            >
+              閉じる
+            </button>
+          </div>
+        </div>
+      )}
+      {/* End of Hepotama's Conclusion Section */}
+
       <InteractionSection
         questionId={questionData.id}
         initialLikes={questionData._count?.likes || 0}
