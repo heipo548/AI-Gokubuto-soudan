@@ -27,17 +27,31 @@ export async function GET(
         updated_at: true,
         admin_conclusion: true, // Added field
         admin_conclusion_updated_at: true, // Added field
-        // Include relations as before
-        answers: true,
+        answers: {
+          select: {
+            id: true,
+            content: true,
+            image_url: true,
+            link_url: true,
+            responder: true,
+            created_at: true,
+            updated_at: true, // Assuming this is also needed
+          }
+        },
         comments: {
-          orderBy: {
-            created_at: 'asc',
-          },
+          orderBy: { created_at: 'asc' },
+          select: {
+            id: true,
+            content: true,
+            commenter_name: true,
+            ip_address: true, // Be mindful of exposing IP if not necessary for public API
+            created_at: true,
+          }
         },
         _count: {
           select: {
             likes: true,
-            // nannoJikanDayoClicks: true, // Ensure this is commented if not needed
+            nannoJikanDayoClicks: true, // Ensure this is commented if not needed
           },
         },
       },

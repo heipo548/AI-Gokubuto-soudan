@@ -34,7 +34,10 @@ export async function GET(request: NextRequest, { params }: RequestParams) {
         updated_at: true,
         admin_conclusion: true,
         admin_conclusion_updated_at: true,
-        // Include other fields if necessary, or select all non-sensitive fields
+        answers: true, // Include answers relation
+        // Optionally, include comments and _count for likes/nannoJikanDayoClicks if needed by admin page
+        // comments: true,
+        // _count: { select: { likes: true, nannoJikanDayoClicks: true } },
       },
     });
 
