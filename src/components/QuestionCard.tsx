@@ -39,7 +39,7 @@ const highlightText = (text: string | undefined, term: string | undefined) => {
   return highlightedText;
 };
 
-export default function QuestionCard({ id, title, category, created_at, status, searchTerm }: QuestionCardProps) {
+export default function QuestionCard({ id, title, category, created_at, status, searchTerm, admin_conclusion }: QuestionCardProps) {
   const formattedDate = new Date(created_at).toLocaleDateString('ja-JP');
   const displayTitle = highlightText(title, searchTerm);
   const hasAdminConclusion = admin_conclusion && admin_conclusion.trim() !== '';
