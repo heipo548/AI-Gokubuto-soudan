@@ -8,7 +8,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  // directUrl = env("DIRECT_URL")
 }
 
 model Question {
@@ -21,6 +21,8 @@ model Question {
   submitter_nickname    String?   @db.VarChar(100) // New field for optional submitter nickname
   created_at            DateTime  @default(now())
   updated_at            DateTime  @updatedAt
+  admin_conclusion              String?   @db.Text
+  admin_conclusion_updated_at DateTime?
   answers               Answer[]
   likes                 Like[]
   comments              Comment[]

@@ -8,6 +8,7 @@ export interface AdminQuestionProps {
   title: string;
   status: string; // 'pending', 'answered'
   created_at: string;
+  admin_conclusion?: string | null; // Added for admin conclusion indicator
   // _count?: { answers: number }; // If you want to show answer count
 }
 
@@ -99,7 +100,14 @@ export default function AdminQuestionList({ filterStatus }: AdminQuestionListPro
           <tbody>
             {questions.map((q) => (
               <tr key={q.id} className="border-b hover:bg-gray-50">
-                <td className="py-3 px-4">{q.title}</td>
+                <td className="py-3 px-4">
+                  {q.title}
+                  {q.admin_conclusion && q.admin_conclusion.trim() !== '' && (
+                    <span className="ml-2 text-xs bg-purple-100 text-purple-800 dark:bg-purple-700 dark:text-purple-100 px-1.5 py-0.5 rounded-full">
+                      結論あり
+                    </span>
+                  )}
+                </td>
                 <td className="py-3 px-4">
                   <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                     q.status === 'answered' ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'
